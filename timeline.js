@@ -70,7 +70,7 @@ function buildTimeline(containerId = 'timeline-container'){
 
 		// use container width so SVG internal units map to displayed pixels (more readable on small screens)
 		const width = Math.max(600, container.clientWidth || 800);
-		const height = Math.max(400, (Object.keys(distros).length * cfg.laneHeight) + cfg.padding.top + cfg.padding.bottom);
+		const height = Math.max(400, (distros.length * cfg.laneHeight) + cfg.padding.top + cfg.padding.bottom);
 
 	// create SVG
 	const svgNS = 'http://www.w3.org/2000/svg';
@@ -232,9 +232,8 @@ function buildTimeline(containerId = 'timeline-container'){
 		const labelsGroup = document.createElementNS(svgNS,'g');
 		labelsGroup.setAttribute('class','labels');
 
-	// helper for tooltip
+	// helper for tooltip (createTooltip will ensure a single global tooltip)
 	const tooltip = createTooltip();
-	document.body.appendChild(tooltip);
 
 	distros.forEach(d => {
 		const lane = lanes[d.id];
@@ -477,7 +476,7 @@ function buildTimeline(containerId = 'timeline-container'){
 		const it = document.createElement('div'); it.className='item';
 		const sw = document.createElement('div'); sw.className='sw'; sw.style.background=c||'#ccc';
 		it.appendChild(sw);
-		const t = document.createElement('div'); t.textContent = '';
+		const t = document.createElement('div'); t.textContent = c || '';
 		it.appendChild(t);
 		legend.appendChild(it);
 	});
@@ -567,8 +566,14 @@ function fitToScreen(svg, viewport, setTransform){
 }
 
 function createTooltip(){
+	// reuse existing tooltip if present
+	const existing = document.querySelector('.tooltip');
+	if(existing) return existing;
 	const t = document.createElement('div');
 	t.className = 'tooltip';
+	// allow newlines and wrapping
+	t.style.whiteSpace = 'pre-wrap';
+	document.body.appendChild(t);
 	return t;
 }
 function showTooltip(el, text){ el.style.display='block'; el.textContent=text; }
