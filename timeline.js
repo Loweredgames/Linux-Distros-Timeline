@@ -10,25 +10,41 @@
 // flow: opzionale, chiave per raggruppare distro nello stesso "flusso"
 const distros = [
     {
-        id: 'unix', 
-        name: 'Unix (context)', 
-        start: 1970, end: null, 
-        parent: null, color: '#7c7cff', 
+        id: 'unix',
+        name: 'Unix (context)',
+        start: 1970,
+		end: null,
+        parent: null, color: '#7c7cff',
         url: null
     },
     {
-        id: 'debian', 
-        name: 'Debian', start: 1993, end: null, parent: null, color: '#ff7b72', url: 'https://www.debian.org/'},
-    {id: 'redhat', name: 'Red Hat', start: 1994, end: null, parent: null, color: '#ff6b6b', url: 'https://www.redhat.com/'},
-    {id: 'slack', name: 'Slackware', start: 1993, end: null, parent: null, color: '#fbbf24', url: 'http://www.slackware.com/'},
-    {id: 'ubuntu', name: 'Ubuntu', start: 2004, end: null, parent: 'debian', color: '#ffa94d', url: 'https://ubuntu.com/'},
-    {id: 'linuxmint', name: 'Linux Mint', start: 2006, end: null, parent: 'ubuntu', color: '#34d399', url: 'https://linuxmint.com/'},
-    {id: 'centos', name: 'CentOS', start: 2004, end: 2028, parent: 'redhat', color: '#fda4af', url: 'https://www.centos.org/'},
-    {id: 'fedora', name: 'Fedora', start: 2003, end: null, parent: 'redhat', color: '#74c0fc', url: 'https://getfedora.org/'},
-    {id: 'arch', name: 'Arch Linux', start: 2002, end: null, parent: null, color: '#8ab4ff', url: 'https://archlinux.org/'},
-    {id: 'manjaro', name: 'Manjaro', start: 2011, end: null, parent: 'arch', color: '#4fd1c5', url: 'https://manjaro.org/'},
-    {id: 'elementary', name: 'elementary OS', start: 2011, end: null, parent: 'ubuntu', color: '#b794f4', url: 'https://elementary.io/'},
-    {id: 'test', name: 'Test OS', start: 2025, end: null, parent: 'arch', color: '#906091', url: null},
+        id: 'debian',
+        name: 'Debian',
+		start: 1993,
+		end: null,
+		parent: null,
+		color: '#ff7b72',
+		url: 'https://www.debian.org/'
+	},
+    {
+		id: 'test',
+		name: 'Test OS',
+		start: 1980,
+		end: null,
+		parent: 'template',
+		color: '#fb00ffff',
+		url: null
+	},
+	// Template
+	{
+		id: 'template',
+		name: 'Template OS',
+		start: 2000,
+		end: 2050,
+		parent: null,
+		color: '#ffffffff',
+		url: null
+	},
 ];
 
 // Configuration
