@@ -10,12 +10,22 @@
 // flow: opzionale, chiave per raggruppare distro nello stesso "flusso"
 const distros = [
     {
-        id: 'unix',
-        name: 'Unix (context)',
-        start: 1970,
-		end: null,
-        parent: null, color: '#7c7cff',
-        url: null
+        id: 'sls',
+        name: 'Softlanding Linux System',
+        start: 1992,
+		end: 1994,
+        parent: null,
+		color: '#e20fb5ff',
+        url: 'https://github.com/rdebath/SLS-1.02'
+    },
+	{
+        id: 'slackware',
+        name: 'Slackware',
+        start: 1993,
+		end: 2022,
+        parent: 'sls', 
+		color: '#444343ff',
+        url: 'http://www.slackware.com/'
     },
     {
         id: 'debian',
@@ -25,15 +35,6 @@ const distros = [
 		parent: null,
 		color: '#ff7b72',
 		url: 'https://www.debian.org/'
-	},
-    {
-		id: 'test',
-		name: 'Test OS',
-		start: 1980,
-		end: null,
-		parent: 'template',
-		color: '#fb00ffff',
-		url: null
 	},
 	// Template
 	{
