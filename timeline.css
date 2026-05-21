@@ -29,32 +29,34 @@ body {
 }
 
 header {
-  padding: 18px 24px 12px;
+  padding: 10px 18px 8px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 24px;
+  gap: 18px;
   background: linear-gradient(180deg, rgba(13,17,23,0.94), rgba(13,17,23,0.86));
   border-bottom: 1px solid rgba(255,255,255,0.06);
   z-index: 2;
+  min-height: 44px;
 }
 
 .intro {
   flex: 1 1 0;
-  min-width: 260px;
+  min-width: 220px;
 }
 
 header h1 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
 }
 
 header p {
-  margin: 10px 0 0;
-  font-size: 0.94rem;
+  margin: 6px 0 0;
+  font-size: 0.82rem;
   color: #8b949e;
+  line-height: 1.1;
 }
 
 #timeline-wrap {
@@ -105,21 +107,25 @@ header p {
 .controls {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   align-items: flex-end;
   justify-content: flex-start;
-  padding: 8px 0;
+  padding: 6px 0;
 }
 
 .controls button {
-  border: 1px solid rgba(148,163,184,0.2);
-  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(148,163,184,0.18);
+  background: rgba(255,255,255,0.04);
   color: #c9d1d9;
-  padding: 10px 14px;
-  border-radius: 999px;
-  font-size: 0.93rem;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 0.85rem;
   font-weight: 600;
-  transition: background 120ms ease, border-color 120ms ease;
+  transition: background 120ms ease, border-color 120ms ease, transform 80ms ease;
+}
+
+.controls button:active {
+  transform: translateY(1px);
 }
 
 .controls button:hover,
