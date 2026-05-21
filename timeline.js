@@ -1,6 +1,13 @@
 const distros = [
     {
-        id: 'SLS',
+        id: 'mcc',
+        name: 'MCC Interim Linux',
+        date: '01/02/1992',
+        color: '#1e165f',
+        url: 'https://en.wikipedia.org/wiki/MCC_Interim_Linux'
+    },
+    {
+        id: 'sls',
         name: 'Softlanding Linux System (SLS)',
         date: '01/05/1992',
         parent: null,
@@ -22,7 +29,7 @@ const distros = [
         logo: 'logos/draft.png',
         date: '20/10/2004',
         parent: 'debian',
-        color: '#77216f',
+        color: '#774121',
         url: 'https://en.wikipedia.org/wiki/Ubuntu'
     },
     {
@@ -124,6 +131,9 @@ const distros = [
         color: '#5fa380',
         url: 'https://en.wikipedia.org/wiki/OpenSUSE_Leap'
     },
+
+
+    // DRAFT: usare come bozza.
     {
         id: 'draft',
         name: 'Draft Distro',
@@ -134,6 +144,8 @@ const distros = [
         color: '#ffffff',
         url: 'https://wiki...'
     },
+
+
     // TEMPLATE: Usa questo esempio per aggiungere o modificare le voci.
     {
         id: 'template-id', // identificatore interno univoco
