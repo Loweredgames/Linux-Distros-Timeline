@@ -22,6 +22,15 @@ const distros = [
             color: '#546cb6',
             url: 'https://en.wikipedia.org/wiki/Slackware'
         },
+        {
+          id: 'suse-linux',
+          name: 'SUSE Linux',
+          logo: 'logos/suse_linux.png',
+          date: '01/03/1994',
+          parent: 'slackware',
+          color: '#7bc143',
+          url: 'https://en.wikipedia.org/wiki/OpenSUSE'
+        },
     {
         id: 'debian',
         name: 'Debian',
