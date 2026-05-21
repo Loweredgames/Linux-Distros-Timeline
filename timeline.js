@@ -323,7 +323,7 @@ distros.forEach(node => {
   group.appendChild(text);
 
   group.addEventListener('pointerenter', event => {
-    const parent = node.parent ? idMap.get(node.parent)?.name ?? 'Sconosciuto' : 'Nessuno';
+    const parent = node.parent ? idMap.get(node.parent)?.name ?? 'Sconosciuto' : 'None';
     const dateStr = node.date;
     tooltip.innerHTML = `<strong>${node.name}</strong><span>Date: ${formatDateISO(dateStr)}</span><br><span>Fork: ${parent}</span>`;
     tooltip.classList.add('visible');
