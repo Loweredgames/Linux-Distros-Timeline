@@ -2,7 +2,7 @@ const distros = [
     { 
         id: 'test1',
         name: 'Test',
-        logo: 'logos/test1.png',
+        logo: '',
         date: '30/01/1991',
         parent: null,
         color: '#000000',
@@ -11,7 +11,7 @@ const distros = [
     { 
         id: 'test2',
         name: 'Test',
-        logo: 'logos/test2.png',
+        logo: '',
         date: '30/01/2001',
         parent: 'test1',
         color: '#000000',
@@ -24,7 +24,7 @@ const distros = [
     {
         id: 'template-id', // identificatore interno univoco
         name: 'Template Distro', // etichetta visualizzata
-        logo: 'logos/drafts.png', // logo distros (meglio 72x72 px, renderizzato a 36x36 px; il file deve esistere)
+        logo: 'logos/draft.png', // logo distros (meglio 72x72 px, renderizzato a 36x36 px; il file deve esistere)
         date: '01/01/1991', // data precisa in formato europeo (GG/MM/AAAA)
         parent: null, // id del genitore se fork/rename, altrimenti null
         relation: 'rename', // opzionale: 'rename' se cambio nome, altrimenti fork
