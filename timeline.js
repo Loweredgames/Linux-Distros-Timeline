@@ -343,14 +343,6 @@ years.forEach((year, index) => {
   gridGroup.appendChild(bottomLabel);
 });
 
-const axis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-axis.setAttribute('x1', marginLeft - 30);
-axis.setAttribute('x2', width - marginRight + 10);
-axis.setAttribute('y1', height - marginBottom + 10);
-axis.setAttribute('y2', height - marginBottom + 10);
-axis.setAttribute('class', 'axis-line');
-svg.appendChild(axis);
-
 // gruppi SVG per nodi e collegamenti
 const nodeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 svg.appendChild(nodeGroup);

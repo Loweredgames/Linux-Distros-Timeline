@@ -145,6 +145,16 @@ header p {
   overscroll-behavior: contain;
 }
 
+/* hide native scrollbars since we support panning with the mouse */
+#timeline-wrap {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+#timeline-wrap::-webkit-scrollbar {
+  display: none; /* WebKit browsers */
+}
+
 #timeline-svg {
   display: block;
   width: max-content;
