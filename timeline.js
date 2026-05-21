@@ -1,585 +1,478 @@
-
-// Timeline data: facile da modificare. Ogni elemento può avere:
-// id: identificatore unico
-// name: nome della distro
-// start: anno di inizio
-// end: anno di fine (null se ancora attiva)
-// parent: id della distro madre (null se root)
-// color: colore opzionale per la linea
-// lane: opzionale, numero intero per forzare la lane verticale
-// flow: opzionale, chiave per raggruppare distro nello stesso "flusso"
 const distros = [
-    {
-        id: 'sls',
-        name: 'Softlanding Linux System',
-        start: 1992,
-		end: 1994,
+    { 
+        id: 'test1',
+        name: 'Test',
+        logo: 'logos/test1.png',
+        date: '30/01/1991',
         parent: null,
-		color: '#e20fb5ff',
-        url: 'https://github.com/rdebath/SLS-1.02'
+        color: '#000000',
+        url: 'https://en.wikipedia.org/wiki/AlmaLinux'
     },
-	{
-        id: 'slackware',
-        name: 'Slackware',
-        start: 1993,
-		end: 2022,
-        parent: 'sls', 
-		color: '#444343ff',
-        url: 'http://www.slackware.com/'
+    { 
+        id: 'test2',
+        name: 'Test',
+        logo: 'logos/test2.png',
+        date: '30/01/2001',
+        parent: 'test1',
+        color: '#000000',
+        url: 'https://en.wikipedia.org/wiki/AlmaLinux'
+        
     },
+
+
+    // TEMPLATE: Usa questo esempio per aggiungere o modificare le voci.
     {
-        id: 'debian',
-        name: 'Debian',
-		start: 1993,
-		end: null,
-		parent: null,
-		color: '#ff7b72',
-		url: 'https://www.debian.org/'
-	},
-	// Template
-	{
-		id: 'template',
-		name: 'Template OS',
-		start: 2000,
-		end: 2050,
-		parent: null,
-		color: '#ffffffff',
-		url: null
-	},
+        id: 'template-id', // identificatore interno univoco
+        name: 'Template Distro', // etichetta visualizzata
+        logo: 'logos/drafts.png', // logo distros (meglio 72x72 px, renderizzato a 36x36 px; il file deve esistere)
+        date: '01/01/1991', // data precisa in formato europeo (GG/MM/AAAA)
+        parent: null, // id del genitore se fork/rename, altrimenti null
+        relation: 'rename', // opzionale: 'rename' se cambio nome, altrimenti fork
+        color: '#000000', // colore del nodo
+        url: 'https://wiki...' // link di approfondimento
+    }
 ];
 
-// Configuration
-const cfg = {
-	padding: {top: 80, bottom: 80, left: 60, right: 60},
-	laneHeight: 28, // vertical spacing per lane
-	yearsAbove: true,
-	yearsBelow: true,
-	yearStep: 1
-};
+// riferimenti agli elementi HTML/SVG
+const svg = document.getElementById('timeline-svg');
+const tooltip = document.getElementById('tooltip');
+const wrap = document.getElementById('timeline-wrap');
 
-// zoom limits (configurable)
-cfg.zoom = { min: 0.6, max: 2.5 };
+// impostazioni generali del grafico
+const yearMin = 1991;
+const yearMax = new Date().getFullYear();
+const years = Array.from({ length: yearMax - yearMin + 1 }, (_, i) => yearMin + i);
+const nodeWidth = 220;
+const nodeHeight = 56;
+const yearStep = 265;
+const marginLeft = 120;
+const marginRight = 180;
+const marginTop = 120;
+const marginBottom = 90;
+const rowGap = 125;
+const panSpeed = 1.7;
 
-function buildTimeline(containerId = 'timeline-container'){
-	const container = document.getElementById(containerId);
-	container.innerHTML = '';
+// mappa le date precise sulla coordinata orizzontale dell'SVG
+const startDate = new Date(yearMin, 0, 1);
+const endDate = new Date(yearMax, 11, 31);
+const msPerDay = 24 * 60 * 60 * 1000;
+const totalDays = Math.round((endDate - startDate) / msPerDay);
+const dayPx = ((years.length - 1) * yearStep) / totalDays;
 
-	// find year range
-	const years = distros.flatMap(d => [d.start, d.end]).filter(y => y != null);
-	const minYear = Math.min(...years) - 1;
-	const maxYear = Math.max(...years) + 1;
-
-		// use container width so SVG internal units map to displayed pixels (more readable on small screens)
-		const width = Math.max(600, container.clientWidth || 800);
-		const height = Math.max(400, (distros.length * cfg.laneHeight) + cfg.padding.top + cfg.padding.bottom);
-
-	// create SVG
-	const svgNS = 'http://www.w3.org/2000/svg';
-		const svg = document.createElementNS(svgNS,'svg');
-		svg.setAttribute('class','timeline');
-		svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-
-		// create a viewport group for pan/zoom
-		const viewport = document.createElementNS(svgNS,'g');
-		viewport.setAttribute('id','viewport');
-		svg.appendChild(viewport);
-
-	// scales
-	const yearsSpan = maxYear - minYear;
-	const xForYear = y => cfg.padding.left + ((y - minYear) / yearsSpan) * (width - cfg.padding.left - cfg.padding.right);
-
-		// assign lanes (vertical positions) with interval scheduling
-		// prefer parent's lane+1 if possible, otherwise earliest free lane
-		const lanes = {};
-		const laneEnds = []; // array of last end year per lane
-
-		const items = distros.map(d => ({...d, s: d.start, e: d.end || maxYear}));
-		// sort by start ascending, so earlier distros get lower lanes
-		items.sort((a,b)=> a.s - b.s || (a.e - b.e));
-
-			// determine flow for each item (inherit from parent if not provided)
-			const byId = Object.fromEntries(distros.map(d=>[d.id,d]));
-			function getFlowKey(d){
-				if(d.flow) return d.flow;
-				if(d.parent && byId[d.parent]) return getFlowKey(byId[d.parent]);
-				return d.id; // default flow is itself
-			}
-			items.forEach(it => it.flowKey = getFlowKey(it));
-
-			// try to keep same flow items in nearby lanes
-			const flowBase = {}; // flowKey -> base lane index
-				function assignLanes(){
-					items.forEach(d => {
-						const s = d.s, e = d.e;
-						const flow = d.flowKey;
-						// if lane explicitly provided, use/allocate it
-						if(d.lane != null){
-							const forced = d.lane;
-							while(laneEnds.length <= forced) laneEnds.push(-Infinity);
-							lanes[d.id] = forced;
-							laneEnds[forced] = Math.max(laneEnds[forced], e);
-							if(flowBase[flow] == null) flowBase[flow] = forced;
-							return;
-						}
-
-						let assigned = -1;
-						if(flowBase[flow] != null){
-							// try lanes starting at flow base
-							for(let i = flowBase[flow]; i < laneEnds.length; i++){
-								if(s > laneEnds[i]){ assigned = i; break; }
-							}
-						}
-						if(assigned === -1){
-							// prefer parent's lane region if parent exists
-							if(d.parent && lanes[d.parent] != null){
-								const pref = lanes[d.parent] + 1;
-								for(let i = pref; i < laneEnds.length; i++){
-									if(s > laneEnds[i]){ assigned = i; break; }
-								}
-								if(assigned === -1){
-									const pLane = lanes[d.parent];
-									if(s > laneEnds[pLane]) assigned = pLane;
-								}
-							}
-						}
-						if(assigned === -1){
-							for(let i=0;i<laneEnds.length;i++){
-								if(s > laneEnds[i]){ assigned = i; break; }
-							}
-						}
-						if(assigned === -1){
-							assigned = laneEnds.length;
-							laneEnds.push(-Infinity);
-						}
-						lanes[d.id] = assigned;
-						laneEnds[assigned] = Math.max(laneEnds[assigned], e);
-						if(flowBase[flow] == null) flowBase[flow] = assigned;
-					});
-				}
-				assignLanes();
-
-		// compute vertical centering for lanes
-		const lanesCount = laneEnds.length;
-		const availableY = height - cfg.padding.top - cfg.padding.bottom;
-		const usedY = Math.max(0, (lanesCount - 1) * cfg.laneHeight);
-		const extraTop = Math.max(0, (availableY - usedY) / 2);
-		const topBase = cfg.padding.top + extraTop;
-
-		// dynamic years group (rendered by renderYears so we can refresh on zoom/pan)
-		const yearGroup = document.createElementNS(svgNS,'g');
-		yearGroup.setAttribute('class','years');
-		viewport.appendChild(yearGroup);
-
-		function renderYears(transformK){
-			// clear
-			yearGroup.innerHTML = '';
-			// compute pixel-per-year at current scale
-			const pxPerYear = ((width - cfg.padding.left - cfg.padding.right) / (maxYear - minYear)) * (transformK || 1);
-			// choose step so that ticks are ~60-120px apart
-			let step = 1;
-			if(pxPerYear < 6) step = 10;
-			else if(pxPerYear < 12) step = 5;
-			else if(pxPerYear < 30) step = 2;
-			else step = 1;
-
-			for(let y = minYear; y <= maxYear; y += step){
-				const x = xForYear(y);
-				// small top and bottom ticks instead of full-height separators
-				const tickTop = document.createElementNS(svgNS,'line');
-				tickTop.setAttribute('x1', x);
-				tickTop.setAttribute('x2', x);
-				tickTop.setAttribute('y1', topBase - 20);
-				tickTop.setAttribute('y2', topBase - 8);
-				const tickBot = document.createElementNS(svgNS,'line');
-				tickBot.setAttribute('x1', x);
-				tickBot.setAttribute('x2', x);
-				tickBot.setAttribute('y1', height - cfg.padding.bottom + 8 - extraTop);
-				tickBot.setAttribute('y2', height - cfg.padding.bottom + 20 - extraTop);
-				if(y % 10 === 0){
-					tickTop.setAttribute('class','year-tick-decade');
-					tickBot.setAttribute('class','year-tick-decade');
-				} else {
-					tickTop.setAttribute('class','year-tick');
-					tickBot.setAttribute('class','year-tick');
-				}
-				yearGroup.appendChild(tickTop);
-				yearGroup.appendChild(tickBot);
-
-				if(cfg.yearsAbove){
-					const t = document.createElementNS(svgNS,'text');
-					t.setAttribute('x',x);
-					t.setAttribute('y', topBase - 28);
-					t.setAttribute('text-anchor','middle');
-					t.setAttribute('class','year-label');
-					t.textContent = y;
-					yearGroup.appendChild(t);
-				}
-				if(cfg.yearsBelow){
-					const t2 = document.createElementNS(svgNS,'text');
-					t2.setAttribute('x',x);
-					t2.setAttribute('y',height - cfg.padding.bottom + 36 - extraTop);
-					t2.setAttribute('text-anchor','middle');
-					t2.setAttribute('class','year-label');
-					t2.textContent = y;
-					yearGroup.appendChild(t2);
-				}
-			}
-		}
-
-	// draw distro lines
-		const linesGroup = document.createElementNS(svgNS,'g');
-		linesGroup.setAttribute('class','distros');
-		// separate group for labels so they can be rendered on top of everything
-		const labelsGroup = document.createElementNS(svgNS,'g');
-		labelsGroup.setAttribute('class','labels');
-
-	// helper for tooltip (createTooltip will ensure a single global tooltip)
-	const tooltip = createTooltip();
-
-	distros.forEach(d => {
-		const lane = lanes[d.id];
-		const y = topBase + lane * cfg.laneHeight;
-		const xStart = xForYear(d.start);
-		const xEnd = xForYear(d.end || maxYear);
-
-		// path: simple rectangle/line representing life
-		const path = document.createElementNS(svgNS,'path');
-		const h = 10;
-		path.setAttribute('d', `M ${xStart} ${y-h} L ${xEnd} ${y-h}`);
-		path.setAttribute('stroke', d.color || '#89b4f8');
-		path.setAttribute('stroke-width','6');
-		path.setAttribute('stroke-linecap','round');
-		path.setAttribute('fill','none');
-		linesGroup.appendChild(path);
-
-		// label group
-		const g = document.createElementNS(svgNS,'g');
-		g.setAttribute('class','distro-box');
-		// measure rect height first and position label above the line (not overlapping)
-		const rectHeight = 26;
-		const gap = 4; // space between line and label (small gap to avoid overlap)
-		const labelY = y - h - rectHeight - gap;
-		g.setAttribute('transform', `translate(${xStart}, ${labelY})`);
-		// store preferred Y for later collision layout
-		g.dataset.prefY = String(labelY);
-
-				const rect = document.createElementNS(svgNS,'rect');
-				// rectHeight already defined above
-				rect.setAttribute('x',0);
-				rect.setAttribute('y',0);
-				rect.setAttribute('rx',6);
-				rect.setAttribute('ry',6);
-				// temporary width, will be adjusted to text width
-				rect.setAttribute('width', 100);
-				rect.setAttribute('height', rectHeight);
-				rect.setAttribute('fill', 'rgba(7,20,35,0.9)');
-				rect.setAttribute('stroke', 'rgba(255,255,255,0.06)');
-				rect.setAttribute('pointer-events', 'none');
-				g.appendChild(rect);
-
-				const text = document.createElementNS(svgNS,'text');
-				text.setAttribute('x',8);
-				// use middle baseline so vertical position is stable
-				text.setAttribute('dominant-baseline','middle');
-				text.setAttribute('y', rectHeight/2);
-				text.setAttribute('class','distro-label');
-				// force font size to stabilize measurements
-				text.setAttribute('font-size','14');
-				text.setAttribute('font-family','Inter, system-ui, Arial, sans-serif');
-				// explicit fill/stroke to ensure contrast even if external CSS doesn't apply
-				text.setAttribute('fill', '#f8fafc');
-				text.setAttribute('stroke', 'rgba(0,0,0,0.85)');
-				text.setAttribute('stroke-width', '2');
-				text.setAttribute('stroke-linejoin', 'round');
-				text.setAttribute('paint-order', 'stroke');
-				text.textContent = d.name;
-				g.appendChild(text);
-
-				// save geometry info for later adjustments
-				g.dataset.xstart = String(xStart);
-				g.dataset.xend = String(xEnd);
-
-				// append label group to labelsGroup so labels sit on top
-				labelsGroup.appendChild(g);
-
-
-				// single click: focus only. double-click: open site if available (or alert)
-				g.addEventListener('click', (ev)=>{
-					const targetX = xStart;
-					const targetY = y - h;
-					focusOn(targetX, targetY, 1.6);
-				});
-				g.addEventListener('dblclick', (ev)=>{
-					if(d.url){
-						window.open(d.url, '_blank');
-					} else {
-						if(d.end && d.end < (new Date()).getFullYear()){
-							alert(`${d.name} sembra non avere un sito attivo (fine: ${d.end}).`);
-						} else {
-							alert(`${d.name} non ha un sito registrato.`);
-						}
-					}
-				});
-
-		// event handlers for tooltip
-		g.addEventListener('mouseenter', (ev)=>{
-				let txt = `${d.name} — ${d.start}${d.end? '–'+d.end:''}`;
-				if(d.url) txt += `\n${d.url}`;
-				showTooltip(tooltip, txt);
-		});
-		g.addEventListener('mousemove', (ev)=>{
-			moveTooltip(tooltip, ev.clientX, ev.clientY);
-		});
-		g.addEventListener('mouseleave', ()=>{ hideTooltip(tooltip); });
-
-	// draw connection to parent as a curve
-		if(d.parent){
-			const p = distros.find(x=>x.id===d.parent);
-			if(p){
-			// parent point at the child's start year (fork point)
-			const childStartYear = d.start;
-			const px = xForYear(childStartYear);
-		const py = topBase + lanes[p.id]*cfg.laneHeight - 10;
-			// if parent doesn't span to that year, fallback to parent's end or start
-			const parentStartX = xForYear(p.start);
-			const parentEndX = xForYear(p.end || p.start);
-			// clamp px between parent's available span
-			const clampedPx = Math.max(Math.min(px, parentEndX), parentStartX);
-			const sx = xStart + 6;
-		const sy = y - 10;
-				// cubic bezier curve
-				const curve = document.createElementNS(svgNS,'path');
-			const cx1 = clampedPx + (sx - clampedPx) * 0.4;
-			const cx2 = clampedPx + (sx - clampedPx) * 0.6;
-			const dAttr = `M ${clampedPx} ${py} C ${cx1} ${py} ${cx2} ${sy} ${sx} ${sy}`;
-				curve.setAttribute('d', dAttr);
-				curve.setAttribute('stroke', d.color || '#89b4f8');
-				curve.setAttribute('stroke-width','2.5');
-				curve.setAttribute('fill','none');
-				curve.setAttribute('stroke-linecap','round');
-				curve.setAttribute('opacity','0.9');
-				linesGroup.appendChild(curve);
-
-				// marker on parent at fork point
-				const marker = document.createElementNS(svgNS,'circle');
-				marker.setAttribute('cx', clampedPx);
-				marker.setAttribute('cy', py);
-				marker.setAttribute('r', 3.5);
-				marker.setAttribute('fill', d.color || '#89b4f8');
-				marker.setAttribute('opacity', '0.95');
-				linesGroup.appendChild(marker);
-				}
-			}
-		});
-
-		// append groups after building all distros so labels are on top
-		viewport.appendChild(linesGroup);
-		viewport.appendChild(labelsGroup);
-		container.appendChild(svg);
-
-		// pan & zoom state
-		let transform = {x:0,y:0,k:1};
-		const setTransform = (t)=>{
-			// clamp scale
-			const k = Math.max(cfg.zoom.min, Math.min(cfg.zoom.max, t.k));
-			// clamp translation so content stays visible
-			const clamped = clampTransform(t.x, t.y, k);
-			transform = {x: clamped.x, y: clamped.y, k: clamped.k};
-			viewport.setAttribute('transform', `translate(${transform.x}, ${transform.y}) scale(${transform.k})`);
-			renderYears(transform.k);
-		};
-
-		// clamp transform so the viewport content bbox remains visible within svg viewport
-		function clampTransform(tx, ty, k){
-			try{
-				const bbox = viewport.getBBox();
-				const vw = svg.clientWidth;
-				const vh = svg.clientHeight;
-				const contentW = (bbox.x + bbox.width) * k - bbox.x * k; // bbox.width * k
-				const contentH = (bbox.y + bbox.height) * k - bbox.y * k; // bbox.height * k
-				const minTx = vw - (bbox.x + bbox.width) * k; // align right
-				const maxTx = - bbox.x * k; // align left
-				const minTy = vh - (bbox.y + bbox.height) * k;
-				const maxTy = - bbox.y * k;
-				let newTx = tx;
-				let newTy = ty;
-				if(minTx > maxTx){
-					// content smaller than viewport — center it
-					newTx = (vw - bbox.width * k) / 2 - bbox.x * k;
-				}else{
-					newTx = Math.max(minTx, Math.min(maxTx, tx));
-				}
-				if(minTy > maxTy){
-					newTy = (vh - bbox.height * k) / 2 - bbox.y * k;
-				}else{
-					newTy = Math.max(minTy, Math.min(maxTy, ty));
-				}
-				return {x: newTx, y: newTy, k};
-			}catch(e){
-				// if bbox not available yet, just return requested transform clamped by zoom
-				return {x: tx, y: ty, k};
-			}
-		}
-
-		// focus on an SVG point (cx,cy) with a target scale k
-		function focusOn(cx, cy, targetK = 1.6){
-			// compute target transform so that (cx,cy) moves to center of svg
-			const svgRect = svg.getBoundingClientRect();
-			// clamp requested scale to allowed range
-			const k = Math.max(cfg.zoom.min, Math.min(cfg.zoom.max, targetK));
-			const x = svgRect.left + svg.clientWidth/2 - cx * k;
-			const y = svgRect.top + svg.clientHeight/2 - cy * k;
-			// convert back to viewport coordinates (we store transform.x/y in screen pixels)
-			setTransform({x, y, k});
-		}
-
-		// simple zoom to point
-		function zoomAt(pointX, pointY, scaleFactor){
-			// convert screen point to svg coords
-			const svgRect = svg.getBoundingClientRect();
-			const cx = (pointX - svgRect.left - transform.x) / transform.k;
-			const cy = (pointY - svgRect.top - transform.y) / transform.k;
-			// compute requested new scale and clamp it
-			const requested = transform.k * scaleFactor;
-			const newK = Math.max(cfg.zoom.min, Math.min(cfg.zoom.max, requested));
-			const nx = pointX - svgRect.left - cx * newK;
-			const ny = pointY - svgRect.top - cy * newK;
-			setTransform({x: nx, y: ny, k: newK});
-		}
-
-		// wheel zoom
-		svg.addEventListener('wheel', (ev)=>{
-			ev.preventDefault();
-			const delta = ev.deltaY > 0 ? 0.9 : 1.1;
-			zoomAt(ev.clientX, ev.clientY, delta);
-		}, {passive:false});
-
-		// pan via mouse drag (re-enabled) — uses setTransform so clamping applies
-		let dragging = false, last = null;
-		svg.addEventListener('pointerdown', (ev)=>{ dragging = true; last = {x:ev.clientX, y:ev.clientY}; svg.setPointerCapture && svg.setPointerCapture(ev.pointerId); svg.style.cursor='grabbing'; });
-		window.addEventListener('pointermove', (ev)=>{ if(!dragging) return; const dx = ev.clientX - last.x; const dy = ev.clientY - last.y; last = {x:ev.clientX, y:ev.clientY}; setTransform({x: transform.x + dx, y: transform.y + dy, k: transform.k}); });
-		window.addEventListener('pointerup', (ev)=>{ if(dragging && svg.releasePointerCapture) try{ svg.releasePointerCapture(ev.pointerId);}catch(e){} dragging=false; last=null; svg.style.cursor='default'; });
-
-			// After SVG is in the DOM, run label layout to avoid overlaps, then fit
-			setTimeout(()=>{
-				layoutLabels(svg, cfg.laneHeight, cfg.padding.top);
-				fitToScreen(svg, viewport, setTransform);
-				// ensure labels sized after fit and after fonts load
-				setTimeout(()=> adjustLabelSizes(svg), 120);
-				setTimeout(()=> adjustLabelSizes(svg), 600);
-			}, 80);
-
-	// legend
-	const legend = document.createElement('div');
-	legend.className = 'legend';
-	const uniqueColors = [...new Map(distros.map(d=>[d.color,d.color])).values()];
-	uniqueColors.forEach(c=>{
-		const it = document.createElement('div'); it.className='item';
-		const sw = document.createElement('div'); sw.className='sw'; sw.style.background=c||'#ccc';
-		it.appendChild(sw);
-		const t = document.createElement('div'); t.textContent = c || '';
-		it.appendChild(t);
-		legend.appendChild(it);
-	});
-	container.appendChild(legend);
+function formatDateISO(iso) {
+  // Converte una data ISO o europea in formato europeo DD/MM/YYYY
+  const d = parseDistroDate(iso);
+  if (!d || isNaN(d)) return iso || '';
+  const day = `${d.getDate()}`.padStart(2, '0');
+  const month = `${d.getMonth() + 1}`.padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
 }
 
-// layout labels to avoid horizontal overlaps: simple greedy strategy
-function layoutLabels(svg, laneHeight, paddingTop){
-	const labels = Array.from(svg.querySelectorAll('g.distro-box'));
-	// compute initial bboxes
-	const placed = [];
-	labels.forEach(g=>{
-		// read current transform x and preferred y
-		const tx = g.getAttribute('transform');
-		const match = /translate\(([^,]+),\s*([^\)]+)\)/.exec(tx);
-		let x = 0, y = 0;
-		if(match){ x = parseFloat(match[1]); y = parseFloat(match[2]); }
-		// ensure content measurable by forcing a small opacity if needed
-		const bbox = g.getBBox();
-		// start from preferred y
-		let baseY = parseFloat(g.dataset.prefY || y);
-		let tries = 0;
-		const step = Math.max(10, laneHeight/2);
-		let placedBox;
-		while(true){
-			// apply temporary transform to compute bbox at candidate position
-			g.setAttribute('transform', `translate(${x}, ${baseY})`);
-			const b = g.getBBox();
-			const intersects = placed.some(p=>{
-				// simple axis-aligned overlap test with padding
-				const pad = 6;
-				return !(b.x + b.width + pad < p.x || b.x > p.x + p.width + pad || b.y + b.height + pad < p.y || b.y > p.y + p.height + pad);
-			});
-			if(!intersects) { placed.push(b); placedBox = b; break; }
-			// try shifting down, then up alternately
-			tries++;
-			if(tries % 2 === 1) baseY = baseY + step * Math.ceil(tries/2);
-			else baseY = (parseFloat(g.dataset.prefY || y)) - step * Math.ceil(tries/2);
-			// stop condition
-			if(tries > 10) { placed.push(b); placedBox = b; break; }
-		}
-	});
+function parseDistroDate(dateStr) {
+  if (!dateStr) return null;
+  const euroMatch = /^([0-3]?\d)\/([0-1]?\d)\/(\d{4})$/.exec(dateStr);
+  if (euroMatch) {
+    const day = Number(euroMatch[1]);
+    const month = Number(euroMatch[2]) - 1;
+    const year = Number(euroMatch[3]);
+    return new Date(year, month, day);
+  }
+  const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+  if (isoMatch) {
+    return new Date(`${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`);
+  }
+  return new Date(dateStr);
 }
 
-// Regola le dimensioni dei rettangoli delle etichette in base al testo misurato
-function adjustLabelSizes(svg){
-	const labels = Array.from(svg.querySelectorAll('g.distro-box'));
-	labels.forEach(g=>{
-		try{
-			const rect = g.querySelector('rect');
-			const text = g.querySelector('text');
-			const xStart = parseFloat(g.dataset.xstart || 0);
-			const xEnd = parseFloat(g.dataset.xend || 0);
-			const textLen = text.getComputedTextLength ? text.getComputedTextLength() : text.getBBox().width;
-			const desired = Math.ceil(textLen + 16);
-			const available = Math.max(80, Math.floor(xEnd - xStart - 6));
-			const finalW = Math.max(80, Math.min(desired, Math.min(400, available)));
-			rect.setAttribute('width', finalW);
-			// clamp position
-			let tx = xStart;
-			if(tx + finalW > xEnd - 4) tx = Math.max( Number(svg.getAttribute('viewBox').split(' ')[0]) + cfg.padding.left, xEnd - finalW - 4);
-			if(tx < cfg.padding.left) tx = cfg.padding.left;
-			// keep same Y and update stored preferred Y to reflect final placement
-			const ty = parseFloat(g.dataset.prefY || 0);
-			g.setAttribute('transform', `translate(${tx}, ${ty})`);
-			g.dataset.prefY = String(ty);
-		}catch(e){/* noop */}
-	});
+// mappa dagli id ai dati delle distro per risolvere padri e relazioni
+const idMap = new Map(distros.map(d => [d.id, d]));
+const familyMap = new Map();
+
+// risolve la famiglia di appartenenza risalendo ai padri successivi
+function resolveFamily(node) {
+  if (!node.parent) return node.id;
+  const parent = idMap.get(node.parent);
+  if (!parent) return node.id;
+  return resolveFamily(parent);
 }
 
-// Fit viewport so all content fits inside container
-function fitToScreen(svg, viewport, setTransform){
-	const svgRect = svg.getBoundingClientRect();
-	// bbox of viewport children
-	const bbox = viewport.getBBox();
-	const scaleX = svg.clientWidth / (bbox.width + 40);
-	const scaleY = svg.clientHeight / (bbox.height + 40);
-		let k = Math.max(0.2, Math.min(5, Math.min(scaleX, scaleY)));
-		// clamp to configured zoom limits
-		k = Math.max(cfg.zoom.min, Math.min(cfg.zoom.max, k));
-	// center
-		const x = (svg.clientWidth - bbox.width * k) / 2 - bbox.x * k;
-		const y = (svg.clientHeight - bbox.height * k) / 2 - bbox.y * k;
-		setTransform({x,y,k});
-	// after transform, recompute label layout (they are in svg coords)
-	setTimeout(()=> layoutLabels(svg, 28, 80), 60);
+// raggruppa le distro per famiglia principale
+distros.forEach(d => {
+  const family = resolveFamily(d);
+  if (!familyMap.has(family)) {
+    familyMap.set(family, []);
+  }
+  familyMap.get(family).push(d);
+});
+
+const families = Array.from(familyMap.keys());
+const columns = new Map();
+families.forEach((family, index) => {
+  columns.set(family, index);
+});
+
+// organizza le distro per riga in base alla famiglia principale
+const rowNodes = new Map();
+distros.forEach(node => {
+  const row = columns.get(resolveFamily(node));
+  if (!rowNodes.has(row)) rowNodes.set(row, []);
+  rowNodes.get(row).push(node);
+});
+
+// calcola il layer verticale per evitare sovrapposizioni
+const slotIndex = new Map();
+let maxSlots = 1;
+const overlapPadding = 18;
+rowNodes.forEach(nodes => {
+  const layers = [];
+  nodes
+    .map(node => {
+      // usa solo la data precisa fornita in node.date
+      const nodeDate = parseDistroDate(node.date);
+      const daysFromStart = Math.round((nodeDate - startDate) / msPerDay);
+      return { node, x: marginLeft + daysFromStart * dayPx };
+    })
+    .sort((a, b) => a.x - b.x)
+    .forEach(({ node, x }) => {
+      // se la distro è un rename rimane sulla stessa riga,
+      // altrimenti (fork) parte dal layer inferiore
+      const isRename = node.parent && node.relation === 'rename';
+      let layer = isRename ? 0 : 1;
+      if (!node.parent) layer = 0;
+      while (true) {
+        const collision = (layers[layer] || []).some(prev => {
+          return !(prev.x + nodeWidth + overlapPadding < x || x + nodeWidth + overlapPadding < prev.x);
+        });
+        if (!collision) break;
+        layer += 1;
+      }
+      if (!layers[layer]) layers[layer] = [];
+      layers[layer].push({ x, id: node.id });
+      slotIndex.set(node.id, layer);
+      maxSlots = Math.max(maxSlots, layer + 1);
+    });
+});
+
+const slotGap = 70;
+const familyRowHeight = rowGap + (maxSlots - 1) * slotGap;
+const width = marginLeft + (years.length - 1) * yearStep + nodeWidth + marginRight;
+const height = marginTop + families.length * familyRowHeight + nodeHeight + marginBottom;
+
+svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+svg.setAttribute('width', width);
+svg.setAttribute('height', height);
+
+// definizioni SVG condivise per frecce e marker
+const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+defs.innerHTML = `
+  <marker id="arrowhead" viewBox="0 0 10 10" refX="10" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="8" orient="auto">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
+  </marker>
+`;
+svg.appendChild(defs);
+
+const background = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+background.setAttribute('x', 0);
+background.setAttribute('y', 0);
+background.setAttribute('width', width);
+background.setAttribute('height', height);
+background.setAttribute('fill', 'transparent');
+background.style.cursor = 'grab';
+svg.appendChild(background);
+
+// disegna le linee annuali e le etichette sullo sfondo
+const gridGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+svg.appendChild(gridGroup);
+
+years.forEach((year, index) => {
+  const yearDate = new Date(year, 0, 1);
+  const x = marginLeft + Math.round((yearDate - startDate) / msPerDay) * dayPx + nodeWidth * 0.5;
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line.setAttribute('x1', x);
+  line.setAttribute('x2', x);
+  line.setAttribute('y1', marginTop - 20);
+  line.setAttribute('y2', height - marginBottom + 20);
+  line.setAttribute('class', 'grid-line');
+  gridGroup.appendChild(line);
+
+  const topLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  topLabel.setAttribute('x', x);
+  topLabel.setAttribute('y', marginTop - 40);
+  topLabel.setAttribute('class', 'year-label');
+  topLabel.textContent = year;
+  gridGroup.appendChild(topLabel);
+
+  const bottomLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  bottomLabel.setAttribute('x', x);
+  bottomLabel.setAttribute('y', height - marginBottom + 34);
+  bottomLabel.setAttribute('class', 'year-label');
+  bottomLabel.textContent = year;
+  gridGroup.appendChild(bottomLabel);
+});
+
+const axis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+axis.setAttribute('x1', marginLeft - 30);
+axis.setAttribute('x2', width - marginRight + 10);
+axis.setAttribute('y1', height - marginBottom + 10);
+axis.setAttribute('y2', height - marginBottom + 10);
+axis.setAttribute('class', 'axis-line');
+svg.appendChild(axis);
+
+// gruppi SVG per nodi e collegamenti
+const nodeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+svg.appendChild(nodeGroup);
+const linkGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+svg.insertBefore(linkGroup, nodeGroup);
+
+const nodePositions = new Map();
+
+distros.forEach(node => {
+  const row = columns.get(resolveFamily(node));
+  // usa solo la data precisa fornita in node.date
+  const nodeDate = parseDistroDate(node.date);
+  const daysFromStart = Math.round((nodeDate - startDate) / msPerDay);
+  const x = marginLeft + daysFromStart * dayPx;
+  const extraRow = slotIndex.get(node.id) || 0;
+  const y = marginTop + row * familyRowHeight + extraRow * slotGap;
+
+  // salva la posizione del nodo per disegnare le linee dopo
+  nodePositions.set(node.id, { x, y });
+
+  const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  group.setAttribute('data-id', node.id);
+  group.style.cursor = 'pointer';
+
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  rect.setAttribute('x', x);
+  rect.setAttribute('y', y);
+  rect.setAttribute('rx', 14);
+  rect.setAttribute('ry', 14);
+  rect.setAttribute('width', nodeWidth);
+  rect.setAttribute('height', nodeHeight);
+  rect.setAttribute('fill', node.color);
+  rect.setAttribute('opacity', '0.96');
+  rect.setAttribute('stroke', 'rgba(255,255,255,0.12)');
+  rect.setAttribute('stroke-width', '1');
+  group.appendChild(rect);
+
+  if (node.logo) {
+    const logoSize = 36;
+    const logoX = x + 12;
+    const logoY = y + (nodeHeight - logoSize) / 2;
+    const image = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+    image.setAttribute('x', logoX);
+    image.setAttribute('y', logoY);
+    image.setAttribute('width', logoSize);
+    image.setAttribute('height', logoSize);
+    image.setAttribute('href', node.logo);
+    image.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    group.appendChild(image);
+  }
+
+  const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  const textOffset = node.logo ? 12 + 36 + 10 : 16;
+  text.setAttribute('x', x + textOffset);
+  text.setAttribute('y', y + 34);
+  text.setAttribute('class', 'node-text');
+  text.textContent = node.name;
+  group.appendChild(text);
+
+  group.addEventListener('pointerenter', event => {
+    const parent = node.parent ? idMap.get(node.parent)?.name ?? 'Sconosciuto' : 'Nessuno';
+    const dateStr = node.date;
+    tooltip.innerHTML = `<strong>${node.name}</strong><span>Data: ${formatDateISO(dateStr)}</span><br><span>Genitore: ${parent}</span>`;
+    tooltip.classList.add('visible');
+  });
+
+  group.addEventListener('pointermove', event => {
+    const wrapRect = wrap.getBoundingClientRect();
+    tooltip.style.left = `${event.clientX - wrapRect.left}px`;
+    tooltip.style.top = `${event.clientY - wrapRect.top}px`;
+  });
+
+  group.addEventListener('pointerleave', () => {
+    tooltip.classList.remove('visible');
+  });
+
+  if (node.url) {
+    group.addEventListener('click', () => {
+      window.open(node.url, '_blank');
+    });
+  }
+
+  nodeGroup.appendChild(group);
+});
+
+// disegna le linee che collegano padre e fork/rename
+distros.forEach(node => {
+  if (!node.parent) return;
+  const source = nodePositions.get(node.parent);
+  const target = nodePositions.get(node.id);
+  if (!source || !target) return;
+
+  const startX = source.x + nodeWidth;
+  const startY = source.y + nodeHeight * 0.5;
+  const endX = target.x;
+  const endY = target.y + nodeHeight * 0.5;
+  const deltaX = Math.max(80, (endX - startX) / 2);
+  const deltaY = (endY - startY) * 0.3;
+  const controlX1 = startX + deltaX;
+  const controlY1 = startY;
+  const controlX2 = endX - deltaX;
+  const controlY2 = endY;
+
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', `M ${startX} ${startY} C ${controlX1} ${controlY1} ${controlX2} ${controlY2} ${endX} ${endY}`);
+  path.setAttribute('class', 'link-path');
+  path.setAttribute('marker-end', 'url(#arrowhead)');
+  linkGroup.appendChild(path);
+});
+
+let isDragging = false;
+let lastX = 0;
+let lastY = 0;
+let viewX = 0;
+let viewY = 0;
+let scale = 1;
+let isSyncingScroll = false;
+
+// aggiorna il viewBox dell'SVG in base a pan e zoom
+function updateViewBox() {
+  const w = width / scale;
+  const h = height / scale;
+  const x = viewX / scale;
+  const y = viewY / scale;
+  svg.setAttribute('viewBox', `${x} ${y} ${w} ${h}`);
 }
 
-function createTooltip(){
-	// reuse existing tooltip if present
-	const existing = document.querySelector('.tooltip');
-	if(existing) return existing;
-	const t = document.createElement('div');
-	t.className = 'tooltip';
-	// allow newlines and wrapping
-	t.style.whiteSpace = 'pre-wrap';
-	document.body.appendChild(t);
-	return t;
+// limita la vista ai bordi del grafico per non oltrepassare l'SVG
+function clampViewXY() {
+  const viewW = width / scale;
+  const viewH = height / scale;
+  const maxViewX = Math.max(0, width - viewW);
+  const maxViewY = Math.max(0, height - viewH);
+  let vbX = viewX / scale;
+  let vbY = viewY / scale;
+  vbX = Math.max(0, Math.min(vbX, maxViewX));
+  vbY = Math.max(0, Math.min(vbY, maxViewY));
+  viewX = vbX * scale;
+  viewY = vbY * scale;
 }
-function showTooltip(el, text){ el.style.display='block'; el.textContent=text; }
-function moveTooltip(el,x,y){ el.style.left=(x+14)+'px'; el.style.top=(y+14)+'px'; }
-function hideTooltip(el){ el.style.display='none'; }
 
-// inizializza al caricamento
-window.addEventListener('load', ()=> buildTimeline());
+function setWrapScrollFromView() {
+  if (!wrap) return;
+  isSyncingScroll = true;
+  wrap.scrollLeft = viewX / scale;
+  wrap.scrollTop = viewY / scale;
+  // attende il termine dello scroll nativo prima di riabilitare la sincronizzazione
+  setTimeout(() => { isSyncingScroll = false; }, 0);
+}
+
+function setViewFromWrapScroll() {
+  if (!wrap) return;
+  viewX = wrap.scrollLeft * scale;
+  viewY = wrap.scrollTop * scale;
+  clampViewXY();
+  updateViewBox();
+}
+
+// panning con il drag del mouse sullo sfondo
+background.addEventListener('pointerdown', event => {
+  isDragging = true;
+  lastX = event.clientX;
+  lastY = event.clientY;
+  background.setPointerCapture(event.pointerId);
+  background.style.cursor = 'grabbing';
+});
+
+background.addEventListener('pointermove', event => {
+  if (!isDragging) return;
+  const dx = event.clientX - lastX;
+  const dy = event.clientY - lastY;
+  lastX = event.clientX;
+  lastY = event.clientY;
+  viewX -= dx * panSpeed;
+  viewY -= dy * panSpeed;
+  clampViewXY();
+  updateViewBox();
+  setWrapScrollFromView();
+});
+
+background.addEventListener('pointerup', event => {
+  isDragging = false;
+  background.releasePointerCapture(event.pointerId);
+  background.style.cursor = 'grab';
+});
+
+// Improved panning: start drag from anywhere on the SVG (including nodes)
+// panning anche trascinando direttamente l'SVG
+svg.style.cursor = 'grab';
+svg.addEventListener('pointerdown', event => {
+  isDragging = true;
+  lastX = event.clientX;
+  lastY = event.clientY;
+  try { svg.setPointerCapture(event.pointerId); } catch (e) {}
+  svg.style.cursor = 'grabbing';
+  // prevent default to avoid accidental text selection
+  event.preventDefault();
+});
+
+svg.addEventListener('pointermove', event => {
+  if (!isDragging) return;
+  const dx = event.clientX - lastX;
+  const dy = event.clientY - lastY;
+  lastX = event.clientX;
+  lastY = event.clientY;
+  viewX -= dx * panSpeed;
+  viewY -= dy * panSpeed;
+  clampViewXY();
+  updateViewBox();
+  setWrapScrollFromView();
+});
+
+svg.addEventListener('pointerup', event => {
+  isDragging = false;
+  try { svg.releasePointerCapture(event.pointerId); } catch (e) {}
+  svg.style.cursor = 'grab';
+});
+
+svg.addEventListener('pointercancel', event => {
+  isDragging = false;
+  try { svg.releasePointerCapture(event.pointerId); } catch (e) {}
+  svg.style.cursor = 'grab';
+});
+
+// sincronizza lo scroll nativo del contenitore con il viewBox
+wrap.addEventListener('scroll', (e) => {
+  if (isSyncingScroll) return;
+  setViewFromWrapScroll();
+});
+
+// zoom con rotellina del mouse, manteniendo il punto centrale del cursore
+wrap.addEventListener('wheel', event => {
+  event.preventDefault();
+  const factor = event.deltaY > 0 ? 0.92 : 1.08;
+  const newScale = Math.min(2.8, Math.max(0.8, scale * factor));
+  const rect = svg.getBoundingClientRect();
+  const offsetX = event.clientX - rect.left;
+  const offsetY = event.clientY - rect.top;
+  const dx = (offsetX / scale) * (newScale - scale);
+  const dy = (offsetY / scale) * (newScale - scale);
+  scale = newScale;
+  viewX += dx;
+  viewY += dy;
+  clampViewXY();
+  updateViewBox();
+  setWrapScrollFromView();
+}, { passive: false });
+
+// adatta la larghezza dell'SVG al ridimensionamento della finestra
+window.addEventListener('resize', () => {
+  const container = wrap.getBoundingClientRect();
+  if (container.width < width) {
+    svg.style.width = `${width}px`;
+  } else {
+    svg.style.width = '100%';
+  }
+});

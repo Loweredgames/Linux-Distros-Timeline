@@ -1,0 +1,134 @@
+:root {
+  color-scheme: dark;
+  color: #c9d1d9;
+  background: #0d1117;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: #0d1117;
+  color: #c9d1d9;
+}
+
+body {
+  overflow: hidden;
+}
+
+#app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  padding: 18px 24px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  background: linear-gradient(180deg, rgba(13,17,23,0.94), rgba(13,17,23,0.86));
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  z-index: 2;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+header p {
+  margin: 0;
+  font-size: 0.94rem;
+  color: #8b949e;
+}
+
+#timeline-wrap {
+  position: relative;
+  flex: 1;
+  overflow: auto;
+  background: radial-gradient(circle at top left, rgba(97, 140, 255, 0.08), transparent 22%),
+              linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.02) 1px, transparent 2px),
+              #0d1117;
+}
+
+#timeline-svg {
+  display: block;
+  width: max-content;
+  height: 100%;
+  min-height: 100%;
+}
+
+.tooltip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(16, 22, 33, 0.94);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #f0f6fc;
+  font-size: 0.92rem;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -110%);
+  transition: opacity 120ms ease, transform 120ms ease;
+  white-space: nowrap;
+  z-index: 3;
+}
+
+.tooltip.visible {
+  opacity: 1;
+  transform: translate(-50%, -120%);
+}
+
+.tooltip strong {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.hint {
+  color: #8b949e;
+  font-size: 0.82rem;
+  margin-top: 4px;
+}
+
+.year-label {
+  fill: #8b949e;
+  font-size: 0.85rem;
+  text-anchor: middle;
+}
+
+.grid-line {
+  stroke: rgba(148,163,184,0.12);
+  stroke-width: 1;
+}
+
+.axis-line {
+  stroke: rgba(148,163,184,0.22);
+  stroke-width: 1.5;
+}
+
+.link-path {
+  fill: none;
+  stroke: rgba(148,163,184,0.8);
+  stroke-width: 1.4;
+  opacity: 0.9;
+}
+
+.node-text {
+  fill: #f8fafc;
+  font-size: 0.85rem;
+  pointer-events: none;
+  font-weight: 600;
+}

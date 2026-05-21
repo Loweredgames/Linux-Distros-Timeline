@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Linux Distribution Timeline</title>
+  <link rel="stylesheet" href="timeline.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <div>
+        <h1>Linux Distribution Timeline</h1>
+        <p>Vertical timeline by year, family nodes, parent-child arrows, zoom/pan and hover tooltips.</p>
+      </div>
+      <div class="hint">Drag background to pan • Mouse wheel to zoom • Hover distro boxes for details</div>
+    </header>
+    <div id="timeline-wrap">
+      <svg id="timeline-svg" viewBox="0 0 1400 1200" preserveAspectRatio="xMinYMin meet"></svg>
+    </div>
+    <div class="tooltip" id="tooltip"></div>
+  </div>
+
+  <script src="timeline.js"></script>
+</body>
+</html>
