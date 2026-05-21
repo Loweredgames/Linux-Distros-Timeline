@@ -3,23 +3,30 @@ const distros = [
         id: 'mcc',
         name: 'MCC Interim Linux',
         date: '01/02/1992',
-        color: '#1e165f',
+        color: '#273941',
         url: 'https://en.wikipedia.org/wiki/MCC_Interim_Linux'
     },
     {
         id: 'sls',
         name: 'Softlanding Linux System (SLS)',
         date: '01/05/1992',
-        parent: null,
         color: '#2410db',
         url: 'https://en.wikipedia.org/wiki/Softlanding_Linux_System'
     },
+        {
+            id: 'slackware',
+            name: 'Slackware Linux',
+            logo: 'logos/slackware.png',
+            date: '17/07/1993',
+            parent: 'sls',
+            color: '#546cb6',
+            url: 'https://en.wikipedia.org/wiki/Slackware'
+        },
     {
         id: 'debian',
         name: 'Debian',
-        logo: 'logos/draft.png',
+        logo: 'logos/debian.png',
         date: '16/08/1993',
-        parent: null,
         color: '#d70a53',
         url: 'https://en.wikipedia.org/wiki/Debian'
     },
@@ -145,12 +152,11 @@ const distros = [
         url: 'https://wiki...'
     },
 
-
     // TEMPLATE: Usa questo esempio per aggiungere o modificare le voci.
     {
         id: 'template-id', // identificatore interno univoco
         name: 'Template Distro', // etichetta visualizzata
-        logo: 'logos/draft.png', // logo distros (meglio 72x72 px, renderizzato a 36x36 px; il file deve esistere)
+        logo: 'logos/draft.png', // logo distros (meglio 72x72 px)
         date: '01/01/1991', // data precisa in formato europeo (GG/MM/AAAA)
         parent: null, // id del genitore se fork/rename, altrimenti null
         relation: 'rename', // opzionale: 'rename' se cambio nome, altrimenti fork
@@ -386,6 +392,17 @@ distros.forEach(node => {
     const logoSize = 36;
     const logoX = x + 12;
     const logoY = y + (nodeHeight - logoSize) / 2;
+    const logoBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    logoBg.setAttribute('x', logoX - 2);
+    logoBg.setAttribute('y', logoY - 2);
+    logoBg.setAttribute('width', logoSize + 4);
+    logoBg.setAttribute('height', logoSize + 4);
+    logoBg.setAttribute('rx', 10);
+    logoBg.setAttribute('fill', 'rgba(255,255,255,0.18)');
+    logoBg.setAttribute('stroke', 'rgba(255,255,255,0.6)');
+    logoBg.setAttribute('stroke-width', '1');
+    group.appendChild(logoBg);
+
     const image = document.createElementNS('http://www.w3.org/2000/svg', 'image');
     image.setAttribute('x', logoX);
     image.setAttribute('y', logoY);
