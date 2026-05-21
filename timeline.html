@@ -3,23 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Linux Distribution Timeline</title>
+  <title>Linux Distros Timeline</title>
   <link rel="stylesheet" href="timeline.css">
 </head>
 <body>
   <div id="app">
     <header>
-      <div>
-        <h1>Linux Distribution Timeline</h1>
+      <div class="intro">
+        <h1>Linux Distros Timeline</h1>
         <p>Vertical timeline by year, family nodes, parent-child arrows, zoom/pan and hover tooltips.</p>
+        <div class="hint">Drag to pan • Mouse wheel or buttons to zoom • Arrow keys + 0 to reset</div>
       </div>
       <div class="controls">
-        <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
         <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
+        <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
         <button id="reset-view" type="button">Reset</button>
-        <button id="fit-view" type="button">Mostra tutto</button>
+        <button id="fit-view" type="button">Fit view</button>
       </div>
-      <div class="hint">Drag to pan • Mouse wheel or buttons to zoom • Arrow keys + 0 to reset</div>
     </header>
     <div id="timeline-wrap">
       <svg id="timeline-svg" viewBox="0 0 1400 1200" preserveAspectRatio="xMinYMin meet"></svg>

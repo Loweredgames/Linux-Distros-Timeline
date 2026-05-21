@@ -32,11 +32,16 @@ header {
   padding: 18px 24px 12px;
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
-  gap: 16px;
+  align-items: flex-start;
+  gap: 24px;
   background: linear-gradient(180deg, rgba(13,17,23,0.94), rgba(13,17,23,0.86));
   border-bottom: 1px solid rgba(255,255,255,0.06);
   z-index: 2;
+}
+
+.intro {
+  flex: 1 1 0;
+  min-width: 260px;
 }
 
 header h1 {
@@ -47,7 +52,7 @@ header h1 {
 }
 
 header p {
-  margin: 0;
+  margin: 10px 0 0;
   font-size: 0.94rem;
   color: #8b949e;
 }
@@ -99,10 +104,11 @@ header p {
 
 .controls {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 10px;
-  align-items: center;
-  margin-top: 8px;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 8px 0;
 }
 
 .controls button {
