@@ -520,6 +520,95 @@ function setViewFromWrapScroll() {
   updateViewBox();
 }
 
+function clampScale(value) {
+  return Math.min(5.2, Math.max(0.8, value));
+}
+
+function zoomTimeline(factor, focusX, focusY) {
+  const newScale = clampScale(scale * factor);
+  if (newScale === scale) return;
+  const rect = svg.getBoundingClientRect();
+  const offsetX = typeof focusX === 'number' ? focusX - rect.left : rect.width / 2;
+  const offsetY = typeof focusY === 'number' ? focusY - rect.top : rect.height / 2;
+  const dx = (offsetX / scale) * (newScale - scale);
+  const dy = (offsetY / scale) * (newScale - scale);
+  scale = newScale;
+  viewX += dx;
+  viewY += dy;
+  clampViewXY();
+  updateViewBox();
+  setWrapScrollFromView();
+}
+
+function panTimeline(dx, dy) {
+  viewX += dx;
+  viewY += dy;
+  clampViewXY();
+  updateViewBox();
+  setWrapScrollFromView();
+}
+
+function resetView() {
+  scale = 1;
+  viewX = 0;
+  viewY = 0;
+  updateViewBox();
+  setWrapScrollFromView();
+}
+
+function fitView() {
+  scale = Math.min(1, Math.min(wrap.clientWidth / width, wrap.clientHeight / height));
+  viewX = 0;
+  viewY = 0;
+  updateViewBox();
+  setWrapScrollFromView();
+}
+
+const zoomInButton = document.getElementById('zoom-in');
+const zoomOutButton = document.getElementById('zoom-out');
+const resetViewButton = document.getElementById('reset-view');
+const fitViewButton = document.getElementById('fit-view');
+
+zoomInButton?.addEventListener('click', () => zoomTimeline(1.15));
+zoomOutButton?.addEventListener('click', () => zoomTimeline(0.85));
+resetViewButton?.addEventListener('click', () => resetView());
+fitViewButton?.addEventListener('click', () => fitView());
+
+window.addEventListener('keydown', event => {
+  if (event.target instanceof HTMLElement && ['INPUT', 'TEXTAREA', 'BUTTON'].includes(event.target.tagName)) return;
+  switch (event.key) {
+    case 'ArrowLeft':
+      event.preventDefault();
+      panTimeline(-120, 0);
+      break;
+    case 'ArrowRight':
+      event.preventDefault();
+      panTimeline(120, 0);
+      break;
+    case 'ArrowUp':
+      event.preventDefault();
+      panTimeline(0, -120);
+      break;
+    case 'ArrowDown':
+      event.preventDefault();
+      panTimeline(0, 120);
+      break;
+    case '+':
+    case '=':
+      event.preventDefault();
+      zoomTimeline(1.15);
+      break;
+    case '-':
+      event.preventDefault();
+      zoomTimeline(0.85);
+      break;
+    case '0':
+      event.preventDefault();
+      resetView();
+      break;
+  }
+});
+
 // panning con il drag del mouse sullo sfondo
 background.addEventListener('pointerdown', event => {
   isDragging = true;
@@ -596,7 +685,7 @@ wrap.addEventListener('scroll', (e) => {
 wrap.addEventListener('wheel', event => {
   event.preventDefault();
   const factor = event.deltaY > 0 ? 0.92 : 1.08;
-  const newScale = Math.min(2.8, Math.max(0.8, scale * factor));
+  const newScale = clampScale(scale * factor);
   const rect = svg.getBoundingClientRect();
   const offsetX = event.clientX - rect.left;
   const offsetY = event.clientY - rect.top;
@@ -618,4 +707,7 @@ window.addEventListener('resize', () => {
   } else {
     svg.style.width = '100%';
   }
+  setWrapScrollFromView();
 });
+
+setWrapScrollFromView();
