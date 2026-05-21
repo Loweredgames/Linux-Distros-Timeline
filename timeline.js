@@ -1,25 +1,139 @@
 const distros = [
-    { 
-        id: 'test1',
-        name: 'Test',
-        logo: '',
-        date: '30/01/1991',
+    {
+        id: 'SLS',
+        name: 'Softlanding Linux System (SLS)',
+        date: '01/05/1992',
         parent: null,
-        color: '#000000',
+        color: '#2410db',
+        url: 'https://en.wikipedia.org/wiki/Softlanding_Linux_System'
+    },
+    {
+        id: 'debian',
+        name: 'Debian',
+        logo: 'logos/draft.png',
+        date: '16/08/1993',
+        parent: null,
+        color: '#d70a53',
+        url: 'https://en.wikipedia.org/wiki/Debian'
+    },
+    {
+        id: 'ubuntu',
+        name: 'Ubuntu',
+        logo: 'logos/draft.png',
+        date: '20/10/2004',
+        parent: 'debian',
+        color: '#77216f',
+        url: 'https://en.wikipedia.org/wiki/Ubuntu'
+    },
+    {
+        id: 'linuxmint',
+        name: 'Linux Mint',
+        logo: 'logos/draft.png',
+        date: '27/08/2006',
+        parent: 'ubuntu',
+        color: '#87cf6e',
+        url: 'https://en.wikipedia.org/wiki/Linux_Mint'
+    },
+    {
+        id: 'elementary-os',
+        name: 'elementary OS',
+        logo: 'logos/draft.png',
+        date: '31/03/2011',
+        parent: 'ubuntu',
+        color: '#4e6ef2',
+        url: 'https://en.wikipedia.org/wiki/Elementary_OS'
+    },
+    {
+        id: 'zorin-os',
+        name: 'Zorin OS',
+        logo: 'logos/draft.png',
+        date: '01/07/2009',
+        parent: 'ubuntu',
+        color: '#2c3e50',
+        url: 'https://en.wikipedia.org/wiki/Zorin_OS'
+    },
+    {
+        id: 'fedora',
+        name: 'Fedora',
+        logo: 'logos/draft.png',
+        date: '06/11/2003',
+        parent: null,
+        color: '#294172',
+        url: 'https://en.wikipedia.org/wiki/Fedora_(operating_system)'
+    },
+    {
+        id: 'centos',
+        name: 'CentOS',
+        logo: 'logos/draft.png',
+        date: '14/05/2004',
+        parent: 'fedora',
+        color: '#262627',
+        url: 'https://en.wikipedia.org/wiki/CentOS'
+    },
+    {
+        id: 'rocky-linux',
+        name: 'Rocky Linux',
+        logo: 'logos/draft.png',
+        date: '21/12/2020',
+        parent: 'centos',
+        color: '#5782a1',
+        url: 'https://en.wikipedia.org/wiki/Rocky_Linux'
+    },
+    {
+        id: 'almalinux',
+        name: 'AlmaLinux',
+        logo: 'logos/draft.png',
+        date: '30/11/2020',
+        parent: 'centos',
+        color: '#0f6ab4',
         url: 'https://en.wikipedia.org/wiki/AlmaLinux'
     },
-    { 
-        id: 'test2',
-        name: 'Test',
-        logo: '',
-        date: '30/01/2001',
-        parent: 'test1',
-        color: '#000000',
-        url: 'https://en.wikipedia.org/wiki/AlmaLinux'
-        
+    {
+        id: 'arch-linux',
+        name: 'Arch Linux',
+        logo: 'logos/draft.png',
+        date: '11/03/2002',
+        parent: null,
+        color: '#1793d1',
+        url: 'https://en.wikipedia.org/wiki/Arch_Linux'
     },
-
-
+    {
+        id: 'manjaro',
+        name: 'Manjaro',
+        logo: 'logos/draft.png',
+        date: '10/07/2011',
+        parent: 'arch-linux',
+        color: '#35bf6f',
+        url: 'https://en.wikipedia.org/wiki/Manjaro'
+    },
+    {
+        id: 'opensuse',
+        name: 'openSUSE',
+        logo: 'logos/draft.png',
+        date: '06/10/2005',
+        parent: null,
+        color: '#5fa380',
+        url: 'https://en.wikipedia.org/wiki/OpenSUSE'
+    },
+    {
+        id: 'opensuse-leap',
+        name: 'openSUSE Leap',
+        logo: 'logos/draft.png',
+        date: '09/11/2019',
+        parent: 'opensuse',
+        color: '#5fa380',
+        url: 'https://en.wikipedia.org/wiki/OpenSUSE_Leap'
+    },
+    {
+        id: 'draft',
+        name: 'Draft Distro',
+        logo: 'logos/draft.png',
+        date: '01/01/1991',
+        parent: null,
+        relation: 'rename',
+        color: '#ffffff',
+        url: 'https://wiki...'
+    },
     // TEMPLATE: Usa questo esempio per aggiungere o modificare le voci.
     {
         id: 'template-id', // identificatore interno univoco
