@@ -3,103 +3,121 @@
 // Ogni oggetto rappresenta una distro con attributi di visualizzazione, date, colore e link.
 // Each object represents a distro with display attributes, dates, color, and link.
 const distros = [
-    {
-        id: 'mcc',
-        name: 'MCC Interim Linux',
-        date: '01/02/1992',
-        last_update: '04/11/1996',
-        parent: null,
-        color: '#273941',
-        url: 'https://en.wikipedia.org/wiki/MCC_Interim_Linux'
-    },
-    {
-        id: 'sls',
-        name: 'Softlanding Linux System (SLS)',
-        date: '01/05/1992',
-        last_update: '01/12/1994',
-        parent: null,
-        color: '#2410db',
-        url: 'https://en.wikipedia.org/wiki/Softlanding_Linux_System'
-    },
-        {
-            id: 'slackware',
-            name: 'Slackware Linux',
-            logo: 'logos/slackware.png',
-            date: '17/07/1993',
-            last_update: '2/2/2022',
-            parent: 'sls',
-            color: '#546cb6',
-            url: 'https://en.wikipedia.org/wiki/Slackware'
-        },
-        {
-          id: 'suse-linux',
-          name: 'SUSE Linux',
-          logo: 'logos/suse_linux.png',
-          date: '01/03/1994',
-          last_update: '07/12/2006',
-          parent: 'slackware',
-          color: '#7bc143',
-          url: 'https://en.wikipedia.org/wiki/OpenSUSE'
-        },
-        {
-          id: 'opensuse',
-          name: 'openSUSE',
-          logo: 'logos/opensuse.png',
-          date: '07/12/2006',
-          last_update: '01/10/2025',
-          parent: 'suse-linux',
-          relation: 'rename',
-          color: '#73ba25',
-          url: 'https://en.wikipedia.org/wiki/OpenSUSE'
-        },
-    {
-        id: 'debian',
-        name: 'Debian',
-        logo: 'logos/debian.png',
-        date: '16/08/1993',
-        last_update: '09/08/2025',
-        parent: null,
-        color: '#d70a53',
-        url: 'https://en.wikipedia.org/wiki/Debian'
-    },
-      {
-          id: 'ubuntu',
-          name: 'Ubuntu',
-          date: '20/10/2004',
-          last_update: '23/04/2026',
-          parent: 'debian',
-          color: '#774121',
-          url: 'https://en.wikipedia.org/wiki/Ubuntu'
-      },
-
+  {
+      id: 'mcc',
+      name: 'MCC Interim Linux',
+      date: '01/02/1992',
+      last_update: '04/11/1996',
+      parent: null,
+      color: '#273941',
+      url: 'https://en.wikipedia.org/wiki/MCC_Interim_Linux'
+  },
+  {
+      id: 'sls',
+      name: 'Softlanding Linux System (SLS)',
+      date: '01/05/1992',
+      last_update: '01/12/1994',
+      parent: null,
+      color: '#2410db',
+      url: 'https://en.wikipedia.org/wiki/Softlanding_Linux_System'
+  },
+  {
+      id: 'slackware',
+      name: 'Slackware Linux',
+      logo: 'logos/slackware.png',
+      date: '17/07/1993',
+      last_update: '2/2/2022',
+      parent: 'sls',
+      color: '#546cb6',
+      url: 'https://en.wikipedia.org/wiki/Slackware'
+  },
+  {
+      id: 'debian',
+      name: 'Debian',
+      logo: 'logos/debian.png',
+      date: '16/08/1993',
+      last_update: '09/08/2025',
+      parent: null,
+      color: '#d70a53',
+      url: 'https://en.wikipedia.org/wiki/Debian'
+  },
+  {
+      id: 'ubuntu',
+      name: 'Ubuntu',
+      date: '20/10/2004',
+      last_update: '23/04/2026',
+      parent: 'debian',
+      color: '#774121',
+      url: 'https://en.wikipedia.org/wiki/Ubuntu'
+  },
+  {
+      id: 'redhat-advanced-server',
+      name: 'Red Hat Advanced Server',
+      date: '22/02/2000',
+      last_update: '07/04/2003',
+      color: '#ee0000',
+      url: 'https://en.wikipedia.org/wiki/Red_Hat_Enterprise_Linux'
+  },
+  {
+      id: 'redhat-enterprise-linux',
+      name: 'Red Hat Enterprise Linux',
+      logo: 'logos/redhat_enterprise_linux.png',
+      date: '07/04/2003',
+      last_update: '19/05/2026',
+      parent: 'redhat-advanced-server',
+      relation: 'rename',
+      color: '#ee0000',
+      url: 'https://en.wikipedia.org/wiki/Red_Hat_Enterprise_Linux'
+  },
+  {
+      id: 'suse-linux',
+      name: 'SUSE Linux',
+      logo: 'logos/suse_linux.png',
+      date: '01/03/1994',
+      last_update: '07/12/2006',
+      parent: 'slackware',
+      color: '#7bc143',
+      url: 'https://en.wikipedia.org/wiki/OpenSUSE'
+  },
+  {
+      id: 'opensuse',
+      name: 'openSUSE',
+      logo: 'logos/opensuse.png',
+      date: '07/12/2006',
+      last_update: '01/10/2025',
+      parent: 'suse-linux',
+      relation: 'rename',
+      color: '#73ba25',
+      url: 'https://en.wikipedia.org/wiki/OpenSUSE'
+  },
 
     // DRAFT: usare come bozza. / DRAFT: use as a draft entry.
-    {
-        id: 'draft',
-        name: 'Draft Distro',
-        logo: 'logos/draft.png',
-        date: '01/01/1991',
-        last_update: '01/01/2000',
-        parent: null,
-        relation: 'rename', // Solo quando c'è un rename
-        color: '#ffffff',
-        url: 'https://wikipedia.com'
-    },
+  {
+      id: 'draft',
+      name: 'Draft Distro',
+      logo: 'logos/draft.png',
+      date: '01/01/1991',
+      last_update: '01/01/2000',
+      parent: null,
+      relation: 'rename', // Solo quando c'è un rename
+      color: '#ffffff',
+      url: 'https://wikipedia.com'
+  },
 
-    // TEMPLATE: Usa questo esempio per aggiungere o modificare le voci.
-    // TEMPLATE: Use this example to add or edit entries.
-    {
-        id: 'template-id', // identificatore interno univoco / unique internal identifier
-        name: 'Template Distro', // etichetta visualizzata / displayed label
-        logo: 'logos/draft.png', // logo distros (meglio 72x72 px) / distro logo (best 72x72 px)
-        date: '01/01/1991', // data precisa in formato europeo (GG/MM/AAAA) / exact date in European format (DD/MM/YYYY)
-        last_update: '01/01/2027', // Ultimo aggiornamento / Last update
-        parent: null, // id del genitore se fork, altrimenti null / parent id if fork/rename, otherwise null
-        relation: 'rename', // Opzionale: mettere 'rename' se cambia nome la distro / Optional: put 'rename' if rename distro
-        color: '#000000', // colore del nodo / node color
-        url: 'https://wikipedia.com' // link di approfondimento / detail link
-    }
+    // TEMPLATE: Usa questo esempio per aggiungere o modificare le voci. / TEMPLATE: Use this example to add or edit entries.
+  {
+      id: 'template-id', // identificatore interno univoco / unique internal identifier
+      name: 'Template Distro', // etichetta visualizzata / displayed label
+      logo: 'logos/draft.png', // logo distros (meglio 72x72 px) / distro logo (best 72x72 px)
+      date: '01/01/1991', // data precisa in formato europeo (GG/MM/AAAA) / exact date in European format (DD/MM/YYYY)
+      last_update: '01/01/2027', // Ultimo aggiornamento / Last update
+      parent: null, // id del genitore se fork, altrimenti null / parent id if fork/rename, otherwise null
+      relation: 'rename', // Opzionale: mettere 'rename' se cambia nome la distro / Optional: put 'rename' if rename distro
+      color: '#000000', // colore del nodo / node color
+      url: 'https://wikipedia.com' // link di approfondimento / detail link
+  }
 ];
+
 
 // riferimenti agli elementi HTML/SVG / HTML/SVG element references
 const svg = document.getElementById('timeline-svg');
