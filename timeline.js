@@ -328,7 +328,9 @@ distros.forEach(node => {
     tooltip.innerHTML = `<strong>${node.name}</strong><span>Date: ${formatDateISO(dateStr)}</span><br><span>Fork: ${parent}</span>`;
     tooltip.classList.add('visible');
   });
-
+  group.addEventListener('pointerdown', event => {
+    event.stopPropagation();
+  });
   group.addEventListener('pointermove', event => {
     const wrapRect = wrap.getBoundingClientRect();
     tooltip.style.left = `${event.clientX - wrapRect.left}px`;
@@ -542,6 +544,9 @@ background.addEventListener('pointerup', event => {
 // panning anche trascinando direttamente l'SVG
 svg.style.cursor = 'grab';
 svg.addEventListener('pointerdown', event => {
+  if (event.target.closest && event.target.closest('g[data-id]')) {
+    return;
+  }
   isDragging = true;
   lastX = event.clientX;
   lastY = event.clientY;
