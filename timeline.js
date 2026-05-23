@@ -7,7 +7,8 @@ const distros = [
         id: 'mcc',
         name: 'MCC Interim Linux',
         date: '01/02/1992',
-        last_update: '',
+        last_update: '04/11/1996',
+        parent: null,
         color: '#273941',
         url: 'https://en.wikipedia.org/wiki/MCC_Interim_Linux'
     },
@@ -15,7 +16,8 @@ const distros = [
         id: 'sls',
         name: 'Softlanding Linux System (SLS)',
         date: '01/05/1992',
-        last_update: '',
+        last_update: '01/12/1994',
+        parent: null,
         color: '#2410db',
         url: 'https://en.wikipedia.org/wiki/Softlanding_Linux_System'
     },
@@ -24,7 +26,7 @@ const distros = [
             name: 'Slackware Linux',
             logo: 'logos/slackware.png',
             date: '17/07/1993',
-            last_update: '',
+            last_update: '2/2/2022',
             parent: 'sls',
             color: '#546cb6',
             url: 'https://en.wikipedia.org/wiki/Slackware'
@@ -34,9 +36,20 @@ const distros = [
           name: 'SUSE Linux',
           logo: 'logos/suse_linux.png',
           date: '01/03/1994',
-          last_update: '',
+          last_update: '07/12/2006',
           parent: 'slackware',
           color: '#7bc143',
+          url: 'https://en.wikipedia.org/wiki/OpenSUSE'
+        },
+        {
+          id: 'opensuse',
+          name: 'openSUSE',
+          logo: 'logos/opensuse.png',
+          date: '07/12/2006',
+          last_update: '01/10/2025',
+          parent: 'suse-linux',
+          relation: 'rename',
+          color: '#73ba25',
           url: 'https://en.wikipedia.org/wiki/OpenSUSE'
         },
     {
@@ -45,6 +58,7 @@ const distros = [
         logo: 'logos/debian.png',
         date: '16/08/1993',
         last_update: '09/08/2025',
+        parent: null,
         color: '#d70a53',
         url: 'https://en.wikipedia.org/wiki/Debian'
     },
@@ -52,7 +66,7 @@ const distros = [
           id: 'ubuntu',
           name: 'Ubuntu',
           date: '20/10/2004',
-          last_update: '',
+          last_update: '23/04/2026',
           parent: 'debian',
           color: '#774121',
           url: 'https://en.wikipedia.org/wiki/Ubuntu'
@@ -67,9 +81,9 @@ const distros = [
         date: '01/01/1991',
         last_update: '01/01/2000',
         parent: null,
-        relation: 'rename',
+        relation: 'rename', // Solo quando c'è un rename
         color: '#ffffff',
-        url: 'https://wiki...'
+        url: 'https://wikipedia.com'
     },
 
     // TEMPLATE: Usa questo esempio per aggiungere o modificare le voci.
@@ -79,9 +93,9 @@ const distros = [
         name: 'Template Distro', // etichetta visualizzata / displayed label
         logo: 'logos/draft.png', // logo distros (meglio 72x72 px) / distro logo (best 72x72 px)
         date: '01/01/1991', // data precisa in formato europeo (GG/MM/AAAA) / exact date in European format (DD/MM/YYYY)
-        last_update: '01/01/2000', // Ultimo aggiornamento / Last update
-        parent: null, // id del genitore se fork/rename, altrimenti null / parent id if fork/rename, otherwise null
-        relation: 'rename', // opzionale: 'rename' se cambio nome, altrimenti fork / optional: 'rename' if rename, otherwise fork
+        last_update: '01/01/2027', // Ultimo aggiornamento / Last update
+        parent: null, // id del genitore se fork, altrimenti null / parent id if fork/rename, otherwise null
+        relation: 'rename', // Opzionale: mettere 'rename' se cambia nome la distro / Optional: put 'rename' if rename distro
         color: '#000000', // colore del nodo / node color
         url: 'https://wikipedia.com' // link di approfondimento / detail link
     }
@@ -219,18 +233,24 @@ rowNodes.forEach(nodes => {
     })
     .sort((a, b) => a.x - b.x)
     .forEach(({ node, x }) => {
-      // se la distro è un rename rimane sulla stessa riga,
-      // otherwise (fork) it starts from a lower layer
       const isRename = node.parent && node.relation === 'rename';
-      let layer = isRename ? 0 : 1;
-      if (!node.parent) layer = 0;
-      while (true) {
-        const collision = (layers[layer] || []).some(prev => {
-          return !(prev.x + nodeWidth + overlapPadding < x || x + nodeWidth + overlapPadding < prev.x);
-        });
-        if (!collision) break;
-        layer += 1;
+      let layer;
+
+      // SE È UN RENAME: Eredita direttamente lo stesso slot/layer del parent / // IF IT IS A RENAME: Directly inherits the same slot/layer as the parent
+      if (isRename && slotIndex.has(node.parent)) {
+        layer = slotIndex.get(node.parent);
+      } else {
+        // ALTRIMENTI (Fork o Radice): Cerca il primo slot libero disponibile / // ELSE (Fork or Root): Search for the first available free slot
+        layer = !node.parent ? 0 : 1;
+        while (true) {
+          const collision = (layers[layer] || []).some(prev => {
+            return !(prev.x + nodeWidth + overlapPadding < x || x + nodeWidth + overlapPadding < prev.x);
+          });
+          if (!collision) break;
+          layer += 1;
+        }
       }
+
       if (!layers[layer]) layers[layer] = [];
       layers[layer].push({ x, id: node.id });
       slotIndex.set(node.id, layer);
