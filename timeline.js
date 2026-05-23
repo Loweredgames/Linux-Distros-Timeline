@@ -1,8 +1,13 @@
+// Dataset delle distribuzioni Linux per la timeline.
+// Dataset of Linux distributions for the timeline.
+// Ogni oggetto rappresenta una distro con attributi di visualizzazione, date, colore e link.
+// Each object represents a distro with display attributes, dates, color, and link.
 const distros = [
     {
         id: 'mcc',
         name: 'MCC Interim Linux',
         date: '01/02/1992',
+        last_update: '',
         color: '#273941',
         url: 'https://en.wikipedia.org/wiki/MCC_Interim_Linux'
     },
@@ -10,6 +15,7 @@ const distros = [
         id: 'sls',
         name: 'Softlanding Linux System (SLS)',
         date: '01/05/1992',
+        last_update: '',
         color: '#2410db',
         url: 'https://en.wikipedia.org/wiki/Softlanding_Linux_System'
     },
@@ -18,6 +24,7 @@ const distros = [
             name: 'Slackware Linux',
             logo: 'logos/slackware.png',
             date: '17/07/1993',
+            last_update: '',
             parent: 'sls',
             color: '#546cb6',
             url: 'https://en.wikipedia.org/wiki/Slackware'
@@ -27,6 +34,7 @@ const distros = [
           name: 'SUSE Linux',
           logo: 'logos/suse_linux.png',
           date: '01/03/1994',
+          last_update: '',
           parent: 'slackware',
           color: '#7bc143',
           url: 'https://en.wikipedia.org/wiki/OpenSUSE'
@@ -36,6 +44,7 @@ const distros = [
         name: 'Debian',
         logo: 'logos/debian.png',
         date: '16/08/1993',
+        last_update: '09/08/2025',
         color: '#d70a53',
         url: 'https://en.wikipedia.org/wiki/Debian'
     },
@@ -43,18 +52,20 @@ const distros = [
           id: 'ubuntu',
           name: 'Ubuntu',
           date: '20/10/2004',
+          last_update: '',
           parent: 'debian',
           color: '#774121',
           url: 'https://en.wikipedia.org/wiki/Ubuntu'
       },
 
 
-    // DRAFT: usare come bozza.
+    // DRAFT: usare come bozza. / DRAFT: use as a draft entry.
     {
         id: 'draft',
         name: 'Draft Distro',
         logo: 'logos/draft.png',
         date: '01/01/1991',
+        last_update: '01/01/2000',
         parent: null,
         relation: 'rename',
         color: '#ffffff',
@@ -62,28 +73,45 @@ const distros = [
     },
 
     // TEMPLATE: Usa questo esempio per aggiungere o modificare le voci.
+    // TEMPLATE: Use this example to add or edit entries.
     {
-        id: 'template-id', // identificatore interno univoco
-        name: 'Template Distro', // etichetta visualizzata
-        logo: 'logos/draft.png', // logo distros (meglio 72x72 px)
-        date: '01/01/1991', // data precisa in formato europeo (GG/MM/AAAA)
-        parent: null, // id del genitore se fork/rename, altrimenti null
-        relation: 'rename', // opzionale: 'rename' se cambio nome, altrimenti fork
-        color: '#000000', // colore del nodo
-        url: 'https://wiki...' // link di approfondimento
+        id: 'template-id', // identificatore interno univoco / unique internal identifier
+        name: 'Template Distro', // etichetta visualizzata / displayed label
+        logo: 'logos/draft.png', // logo distros (meglio 72x72 px) / distro logo (best 72x72 px)
+        date: '01/01/1991', // data precisa in formato europeo (GG/MM/AAAA) / exact date in European format (DD/MM/YYYY)
+        last_update: '01/01/2000', // Ultimo aggiornamento / Last update
+        parent: null, // id del genitore se fork/rename, altrimenti null / parent id if fork/rename, otherwise null
+        relation: 'rename', // opzionale: 'rename' se cambio nome, altrimenti fork / optional: 'rename' if rename, otherwise fork
+        color: '#000000', // colore del nodo / node color
+        url: 'https://wikipedia.com' // link di approfondimento / detail link
     }
 ];
 
-// riferimenti agli elementi HTML/SVG
+// riferimenti agli elementi HTML/SVG / HTML/SVG element references
 const svg = document.getElementById('timeline-svg');
 const tooltip = document.getElementById('tooltip');
 const wrap = document.getElementById('timeline-wrap');
 
-// impostazioni generali del grafico
+// impostazioni generali del grafico / general chart settings
 const yearMin = 1991;
-const yearMax = new Date().getFullYear();
+
+// Calcolo finale della data nel grafico in maniera dinamica / dynamically calculate the final date in the chart
+let dynamicYearMax = new Date().getFullYear();
+distros.forEach(distro => {
+    const releaseDate = parseDistroDate(distro.date);
+    const updateDate = parseDistroDate(distro.last_update);
+    
+    if (isValidDate(releaseDate)) {
+        dynamicYearMax = Math.max(dynamicYearMax, releaseDate.getFullYear());
+    }
+    if (isValidDate(updateDate)) {
+        dynamicYearMax = Math.max(dynamicYearMax, updateDate.getFullYear());
+    }
+});
+
+const yearMax = dynamicYearMax;
 const years = Array.from({ length: yearMax - yearMin + 1 }, (_, i) => yearMin + i);
-const nodeWidth = 220;
+const nodeWidth = 230;
 const nodeHeight = 56;
 const yearStep = 265;
 const marginLeft = 120;
@@ -91,9 +119,10 @@ const marginRight = 180;
 const marginTop = 120;
 const marginBottom = 90;
 const rowGap = 125;
-const panSpeed = 1.7;
+const panSpeed = 1.8;
 
 // mappa le date precise sulla coordinata orizzontale dell'SVG
+// map precise dates to the horizontal SVG coordinate
 const startDate = new Date(yearMin, 0, 1);
 const endDate = new Date(yearMax, 11, 31);
 const msPerDay = 24 * 60 * 60 * 1000;
@@ -102,6 +131,7 @@ const dayPx = ((years.length - 1) * yearStep) / totalDays;
 
 function formatDateISO(iso) {
   // Converte una data ISO o europea in formato europeo DD/MM/YYYY
+  // Convert an ISO or European date into European format DD/MM/YYYY
   const d = parseDistroDate(iso);
   if (!d || isNaN(d)) return iso || '';
   const day = `${d.getDate()}`.padStart(2, '0');
@@ -111,6 +141,8 @@ function formatDateISO(iso) {
 }
 
 function parseDistroDate(dateStr) {
+  // legge una stringa data in formato europeo o ISO e restituisce un oggetto Date
+  // parse a date string in European or ISO format and return a Date object
   if (!dateStr) return null;
   const euroMatch = /^([0-3]?\d)\/([0-1]?\d)\/(\d{4})$/.exec(dateStr);
   if (euroMatch) {
@@ -126,11 +158,19 @@ function parseDistroDate(dateStr) {
   return new Date(dateStr);
 }
 
+function isValidDate(date) {
+  // verifica che l'oggetto Date sia valido e non NaN
+  // check that the Date object is valid and not NaN
+
+  return date instanceof Date && !Number.isNaN(date.getTime());
+}
+
 // mappa dagli id ai dati delle distro per risolvere padri e relazioni
 const idMap = new Map(distros.map(d => [d.id, d]));
 const familyMap = new Map();
 
 // risolve la famiglia di appartenenza risalendo ai padri successivi
+// resolve the root family by walking parent links recursively
 function resolveFamily(node) {
   if (!node.parent) return node.id;
   const parent = idMap.get(node.parent);
@@ -138,7 +178,7 @@ function resolveFamily(node) {
   return resolveFamily(parent);
 }
 
-// raggruppa le distro per famiglia principale
+// raggruppa le distro per famiglia principale / group distros by top-level family
 distros.forEach(d => {
   const family = resolveFamily(d);
   if (!familyMap.has(family)) {
@@ -154,6 +194,7 @@ families.forEach((family, index) => {
 });
 
 // organizza le distro per riga in base alla famiglia principale
+// organize distros into rows according to their main family
 const rowNodes = new Map();
 distros.forEach(node => {
   const row = columns.get(resolveFamily(node));
@@ -162,6 +203,7 @@ distros.forEach(node => {
 });
 
 // calcola il layer verticale per evitare sovrapposizioni
+// compute vertical layers to avoid overlapping nodes on the same row
 const slotIndex = new Map();
 let maxSlots = 1;
 const overlapPadding = 18;
@@ -170,6 +212,7 @@ rowNodes.forEach(nodes => {
   nodes
     .map(node => {
       // usa solo la data precisa fornita in node.date
+      // use only the precise date given in node.date
       const nodeDate = parseDistroDate(node.date);
       const daysFromStart = Math.round((nodeDate - startDate) / msPerDay);
       return { node, x: marginLeft + daysFromStart * dayPx };
@@ -177,7 +220,7 @@ rowNodes.forEach(nodes => {
     .sort((a, b) => a.x - b.x)
     .forEach(({ node, x }) => {
       // se la distro è un rename rimane sulla stessa riga,
-      // altrimenti (fork) parte dal layer inferiore
+      // otherwise (fork) it starts from a lower layer
       const isRename = node.parent && node.relation === 'rename';
       let layer = isRename ? 0 : 1;
       if (!node.parent) layer = 0;
@@ -197,6 +240,8 @@ rowNodes.forEach(nodes => {
 
 const slotGap = 70;
 const familyRowHeight = rowGap + (maxSlots - 1) * slotGap;
+// familyRowHeight determina la distanza tra le righe di famiglie diverse
+// familyRowHeight determines the vertical spacing between different family rows
 const width = marginLeft + (years.length - 1) * yearStep + nodeWidth + marginRight;
 const height = marginTop + families.length * familyRowHeight + nodeHeight + marginBottom;
 
@@ -205,6 +250,7 @@ svg.setAttribute('width', width);
 svg.setAttribute('height', height);
 
 // definizioni SVG condivise per frecce e marker
+// shared SVG definitions for arrows and markers
 const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
 defs.innerHTML = `
   <marker id="arrowhead" viewBox="0 0 10 10" refX="10" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="8" orient="auto">
@@ -223,10 +269,11 @@ background.style.cursor = 'grab';
 svg.appendChild(background);
 
 // disegna le linee annuali e le etichette sullo sfondo
+// draw annual grid lines and year labels in the background
 const gridGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 svg.appendChild(gridGroup);
 
-years.forEach((year, index) => {
+years.forEach(year => {
   const yearDate = new Date(year, 0, 1);
   const x = marginLeft + Math.round((yearDate - startDate) / msPerDay) * dayPx + nodeWidth * 0.5;
   const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -253,13 +300,17 @@ years.forEach((year, index) => {
 });
 
 // gruppi SVG per nodi e collegamenti
+// SVG groups for update ranges, nodes, and relationship links
+const updateGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+svg.appendChild(updateGroup);
 const nodeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 svg.appendChild(nodeGroup);
 const linkGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 svg.insertBefore(linkGroup, nodeGroup);
 
 const nodePositions = new Map();
-
+// nodePositions memorizza le coordinate di ogni nodo per tracciare i collegamenti padre-figlio
+// nodePositions stores each node's coordinates for drawing parent-child links
 distros.forEach(node => {
   const row = columns.get(resolveFamily(node));
   // usa solo la data precisa fornita in node.date
@@ -272,6 +323,34 @@ distros.forEach(node => {
   // salva la posizione del nodo per disegnare le linee dopo
   nodePositions.set(node.id, { x, y });
 
+  const rawUpdateDate = parseDistroDate(node.last_update);
+  const updateDate = isValidDate(rawUpdateDate) ? rawUpdateDate : null;
+  // se last_update è valido e successivo alla data di rilascio, disegna il range di aggiornamento
+  // if last_update is valid and later than the release date, draw the update range
+  if (updateDate && updateDate > nodeDate) {
+    const updateX = marginLeft + Math.round((updateDate - startDate) / msPerDay) * dayPx;
+    const rangeStart = x + nodeWidth * 0.5;
+    const rangeEnd = updateX + nodeWidth * 0.5;
+    const updateLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    updateLine.setAttribute('x1', Math.min(rangeStart, rangeEnd));
+    updateLine.setAttribute('x2', Math.max(rangeStart, rangeEnd));
+    updateLine.setAttribute('y1', y + nodeHeight * 0.5);
+    updateLine.setAttribute('y2', y + nodeHeight * 0.5);
+    updateLine.setAttribute('class', 'update-range');
+    updateLine.setAttribute('stroke', node.color);
+    updateGroup.appendChild(updateLine);
+
+    const updateDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    updateDot.setAttribute('cx', rangeEnd);
+    updateDot.setAttribute('cy', y + nodeHeight * 0.5);
+    updateDot.setAttribute('r', 4);
+    updateDot.setAttribute('class', 'update-endpoint');
+    updateDot.setAttribute('fill', node.color);
+    updateGroup.appendChild(updateDot);
+  }
+
+  // crea il gruppo SVG rappresentante il nodo della distro
+  // create the SVG group representing the distro node
   const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   group.setAttribute('data-id', node.id);
   group.style.cursor = 'pointer';
@@ -325,9 +404,12 @@ distros.forEach(node => {
   group.addEventListener('pointerenter', event => {
     const parent = node.parent ? idMap.get(node.parent)?.name ?? 'Sconosciuto' : 'None';
     const dateStr = node.date;
-    tooltip.innerHTML = `<strong>${node.name}</strong><span>Date: ${formatDateISO(dateStr)}</span><br><span>Fork: ${parent}</span>`;
+    const lastUpdate = node.last_update ? `<br><span>Last update: ${formatDateISO(node.last_update)}</span>` : '';
+    tooltip.innerHTML = `<strong>${node.name}</strong><span>Date: ${formatDateISO(dateStr)}</span>${lastUpdate}<br><span>Fork: ${parent}</span>`;
     tooltip.classList.add('visible');
   });
+  // previene la propagazione per evitare di attivare il pannello di drag se il nodo viene cliccato
+  // prevent propagation to avoid starting panning when clicking on a node
   group.addEventListener('pointerdown', event => {
     event.stopPropagation();
   });
@@ -351,6 +433,7 @@ distros.forEach(node => {
 });
 
 // disegna le linee che collegano padre e fork/rename
+// draw curves that link parent distros to child forks or renames
 distros.forEach(node => {
   if (!node.parent) return;
   const source = nodePositions.get(node.parent);
@@ -362,11 +445,12 @@ distros.forEach(node => {
   const endX = target.x;
   const endY = target.y + nodeHeight * 0.5;
   const deltaX = Math.max(80, (endX - startX) / 2);
-  const deltaY = (endY - startY) * 0.3;
   const controlX1 = startX + deltaX;
   const controlY1 = startY;
   const controlX2 = endX - deltaX;
   const controlY2 = endY;
+  // definiamo una curva di Bézier per rendere le linee più leggibili
+  // define a Bézier curve to make the connection lines more readable
 
   const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
   path.setAttribute('d', `M ${startX} ${startY} C ${controlX1} ${controlY1} ${controlX2} ${controlY2} ${endX} ${endY}`);
@@ -389,10 +473,13 @@ function updateViewBox() {
   const h = height / scale;
   const x = viewX / scale;
   const y = viewY / scale;
+  // aggiorna il viewBox dell'SVG in base alle coordinate di pan/zoom
+  // update the SVG viewBox based on pan/zoom coordinates
   svg.setAttribute('viewBox', `${x} ${y} ${w} ${h}`);
 }
 
 // limita la vista ai bordi del grafico per non oltrepassare l'SVG
+// clamp the view so the viewport stays inside the SVG bounds
 function clampViewXY() {
   const viewW = width / scale;
   const viewH = height / scale;
@@ -412,6 +499,7 @@ function setWrapScrollFromView() {
   wrap.scrollLeft = viewX / scale;
   wrap.scrollTop = viewY / scale;
   // attende il termine dello scroll nativo prima di riabilitare la sincronizzazione
+  // wait for native scroll to finish before re-enabling sync
   setTimeout(() => { isSyncingScroll = false; }, 0);
 }
 
@@ -424,6 +512,8 @@ function setViewFromWrapScroll() {
 }
 
 function clampScale(value) {
+  // limita lo zoom fra min e max per evitare ingrandimenti o riduzioni eccessive
+  // clamp zoom between min and max to avoid excessive scales
   return Math.min(5.2, Math.max(0.8, value));
 }
 
@@ -444,6 +534,8 @@ function zoomTimeline(factor, focusX, focusY) {
 }
 
 function panTimeline(dx, dy) {
+  // sposta la vista all'interno del grafico secondo le coordinate dx/dy
+  // pan the view inside the chart by dx/dy amounts
   viewX += dx;
   viewY += dy;
   clampViewXY();
@@ -452,6 +544,8 @@ function panTimeline(dx, dy) {
 }
 
 function resetView() {
+  // ripristina visuale e zoom al valore predefinito
+  // reset view and zoom to default values
   scale = 1;
   viewX = 0;
   viewY = 0;
@@ -460,6 +554,8 @@ function resetView() {
 }
 
 function fitView() {
+  // adatta la vista all'intera area del grafico mantenendo le proporzioni
+  // fit the view to the full chart area while keeping proportions
   scale = Math.min(1, Math.min(wrap.clientWidth / width, wrap.clientHeight / height));
   viewX = 0;
   viewY = 0;
@@ -477,6 +573,8 @@ zoomOutButton?.addEventListener('click', () => zoomTimeline(0.85));
 resetViewButton?.addEventListener('click', () => resetView());
 fitViewButton?.addEventListener('click', () => fitView());
 
+// scorciatoie da tastiera per pan e zoom
+// keyboard shortcuts for pan and zoom
 window.addEventListener('keydown', event => {
   if (event.target instanceof HTMLElement && ['INPUT', 'TEXTAREA', 'BUTTON'].includes(event.target.tagName)) return;
   switch (event.key) {
@@ -513,6 +611,7 @@ window.addEventListener('keydown', event => {
 });
 
 // panning con il drag del mouse sullo sfondo
+// pan by dragging the background with the mouse
 background.addEventListener('pointerdown', event => {
   isDragging = true;
   lastX = event.clientX;
@@ -543,6 +642,8 @@ background.addEventListener('pointerup', event => {
 // Improved panning: start drag from anywhere on the SVG (including nodes)
 // panning anche trascinando direttamente l'SVG
 svg.style.cursor = 'grab';
+// migliorato: avvia il pan anche dal resto dell'SVG, tranne che sui nodi
+// improved: start panning from anywhere on the SVG except on nodes
 svg.addEventListener('pointerdown', event => {
   if (event.target.closest && event.target.closest('g[data-id]')) {
     return;
@@ -570,12 +671,16 @@ svg.addEventListener('pointermove', event => {
 });
 
 svg.addEventListener('pointerup', event => {
+  // termina il panning quando il bottone del mouse viene rilasciato
+  // end panning when the mouse button is released
   isDragging = false;
   try { svg.releasePointerCapture(event.pointerId); } catch (e) {}
   svg.style.cursor = 'grab';
 });
 
 svg.addEventListener('pointercancel', event => {
+  // termina il panning se il puntatore viene cancellato
+  // end panning if the pointer is cancelled
   isDragging = false;
   try { svg.releasePointerCapture(event.pointerId); } catch (e) {}
   svg.style.cursor = 'grab';
@@ -587,7 +692,8 @@ wrap.addEventListener('scroll', (e) => {
   setViewFromWrapScroll();
 });
 
-// zoom con rotellina del mouse, manteniendo il punto centrale del cursore
+// zoom con rotellina del mouse, mantenendo il punto centrale del cursore
+// mouse wheel zoom while keeping the cursor focus point fixed
 wrap.addEventListener('wheel', event => {
   event.preventDefault();
   const factor = event.deltaY > 0 ? 0.92 : 1.08;

@@ -66,6 +66,7 @@ header p {
   background: radial-gradient(circle at top left, rgba(97, 140, 255, 0.08), transparent 22%),
               linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.02) 1px, transparent 2px),
               #0d1117;
+  overscroll-behavior: contain;
 }
 
 #timeline-svg {
@@ -141,16 +142,6 @@ header p {
   margin-top: 4px;
 }
 
-#timeline-wrap {
-  position: relative;
-  flex: 1;
-  overflow: auto;
-  background: radial-gradient(circle at top left, rgba(97, 140, 255, 0.08), transparent 22%),
-              linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.02) 1px, transparent 2px),
-              #0d1117;
-  overscroll-behavior: contain;
-}
-
 /* hide native scrollbars since we support panning with the mouse */
 #timeline-wrap {
   -ms-overflow-style: none; /* IE and Edge */
@@ -180,16 +171,22 @@ header p {
   stroke-width: 1;
 }
 
-.axis-line {
-  stroke: rgba(148,163,184,0.22);
-  stroke-width: 1.5;
-}
-
 .link-path {
   fill: none;
   stroke: rgba(148,163,184,0.8);
   stroke-width: 1.4;
   opacity: 0.9;
+}
+
+.update-range {
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.8;
+}
+
+.update-endpoint {
+  stroke: rgba(255,255,255,0.2);
+  stroke-width: 1;
 }
 
 .node-text {
