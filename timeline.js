@@ -124,7 +124,7 @@ const distros = [
       name: 'Arch Linux',
       logo: 'logos/arch-linux.png',
       date: '11/03/2002',
-      last_update: '23/05/2026', // Today
+      last_update: '01/01/2030', // Today
       parent: null,
       rename: null,
       color: '#1793d1',
