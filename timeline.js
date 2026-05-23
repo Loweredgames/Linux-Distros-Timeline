@@ -9,6 +9,7 @@ const distros = [
       date: '01/02/1992',
       last_update: '04/11/1996',
       parent: null,
+      rename: null,
       color: '#273941',
       url: 'https://en.wikipedia.org/wiki/MCC_Interim_Linux'
   },
@@ -18,6 +19,7 @@ const distros = [
       date: '01/05/1992',
       last_update: '01/12/1994',
       parent: null,
+      rename: null,
       color: '#2410db',
       url: 'https://en.wikipedia.org/wiki/Softlanding_Linux_System'
   },
@@ -28,6 +30,7 @@ const distros = [
       date: '17/07/1993',
       last_update: '2/2/2022',
       parent: 'sls',
+      rename: null,
       color: '#546cb6',
       url: 'https://en.wikipedia.org/wiki/Slackware'
   },
@@ -47,27 +50,52 @@ const distros = [
       date: '20/10/2004',
       last_update: '23/04/2026',
       parent: 'debian',
+      rename: null,
       color: '#774121',
       url: 'https://en.wikipedia.org/wiki/Ubuntu'
   },
   {
-      id: 'redhat-advanced-server',
-      name: 'Red Hat Advanced Server',
-      date: '22/02/2000',
-      last_update: '07/04/2003',
+      id: 'redhat-linux',
+      name: 'Red Hat Linux',
+      logo: 'logos/redhat-linux.png',
+      date: '13/05/1995',
+      last_update: '31/03/2003',
+      parent: null,
+      rename: 'redhat-enterprise-linux',
       color: '#ee0000',
-      url: 'https://en.wikipedia.org/wiki/Red_Hat_Enterprise_Linux'
+      url: 'https://en.wikipedia.org/wiki/Red_Hat_Linux'
   },
   {
       id: 'redhat-enterprise-linux',
       name: 'Red Hat Enterprise Linux',
       logo: 'logos/redhat_enterprise_linux.png',
-      date: '07/04/2003',
+      date: '31/03/2003',
       last_update: '19/05/2026',
-      parent: 'redhat-advanced-server',
-      relation: 'rename',
+      parent: 'fedora-core',
+      rename: null,
       color: '#ee0000',
       url: 'https://en.wikipedia.org/wiki/Red_Hat_Enterprise_Linux'
+  },
+  {
+      id: 'fedora-core',
+      name: 'Fedora Core',
+      logo: 'logos/fedora.png',
+      date: '04/11/2003',
+      last_update: '31/07/2007',
+      parent: null,
+      rename: 'fedora-linux',
+      color: '#51a2da',
+      url: 'https://en.wikipedia.org/wiki/Fedora_Linux'
+  },
+  {
+      id: 'fedora-linux',
+      name: 'Fedora Core',
+      date: '31/07/2007',
+      last_update: '28/04/2026',
+      parent: null,
+      rename: null,
+      color: '#51a2da',
+      url: 'https://en.wikipedia.org/wiki/Fedora_Linux'
   },
   {
       id: 'suse-linux',
@@ -76,6 +104,7 @@ const distros = [
       date: '01/03/1994',
       last_update: '07/12/2006',
       parent: 'slackware',
+      rename: 'opensuse',
       color: '#7bc143',
       url: 'https://en.wikipedia.org/wiki/OpenSUSE'
   },
@@ -85,8 +114,8 @@ const distros = [
       logo: 'logos/opensuse.png',
       date: '07/12/2006',
       last_update: '01/10/2025',
-      parent: 'suse-linux',
-      relation: 'rename',
+      parent: null,
+      rename: null,
       color: '#73ba25',
       url: 'https://en.wikipedia.org/wiki/OpenSUSE'
   },
@@ -99,7 +128,7 @@ const distros = [
       date: '01/01/1991',
       last_update: '01/01/2000',
       parent: null,
-      relation: 'rename', // Solo quando c'è un rename
+      rename: null,
       color: '#ffffff',
       url: 'https://wikipedia.com'
   },
@@ -112,7 +141,7 @@ const distros = [
       date: '01/01/1991', // data precisa in formato europeo (GG/MM/AAAA) / exact date in European format (DD/MM/YYYY)
       last_update: '01/01/2027', // Ultimo aggiornamento / Last update
       parent: null, // id del genitore se fork, altrimenti null / parent id if fork/rename, otherwise null
-      relation: 'rename', // Opzionale: mettere 'rename' se cambia nome la distro / Optional: put 'rename' if rename distro
+      rename: null, // Opzionale: mettere rename solo se la distro è stata rinominata nella sua storia / Optional: Only set rename if the distro has been renamed in its history
       color: '#000000', // colore del nodo / node color
       url: 'https://wikipedia.com' // link di approfondimento / detail link
   }
@@ -199,11 +228,22 @@ function isValidDate(date) {
 
 // mappa dagli id ai dati delle distro per risolvere padri e relazioni
 const idMap = new Map(distros.map(d => [d.id, d]));
+const renamePredictorMap = new Map();
+distros.forEach(d => {
+  if (d.rename && idMap.has(d.rename)) {
+    renamePredictorMap.set(d.rename, d.id);
+  }
+});
+
 const familyMap = new Map();
 
 // risolve la famiglia di appartenenza risalendo ai padri successivi
 // resolve the root family by walking parent links recursively
 function resolveFamily(node) {
+  if (renamePredictorMap.has(node.id)) {
+    const oldNode = idMap.get(renamePredictorMap.get(node.id));
+    if (oldNode) return resolveFamily(oldNode);
+  }
   if (!node.parent) return node.id;
   const parent = idMap.get(node.parent);
   if (!parent) return node.id;
@@ -251,12 +291,13 @@ rowNodes.forEach(nodes => {
     })
     .sort((a, b) => a.x - b.x)
     .forEach(({ node, x }) => {
-      const isRename = node.parent && node.relation === 'rename';
+      const renameParentId = renamePredictorMap.get(node.id);
+      const isRename = !!renameParentId;
       let layer;
 
-      // SE È UN RENAME: Eredita direttamente lo stesso slot/layer del parent / // IF IT IS A RENAME: Directly inherits the same slot/layer as the parent
-      if (isRename && slotIndex.has(node.parent)) {
-        layer = slotIndex.get(node.parent);
+      // SE È UN RENAME: Eredita forzatamente lo stesso identico slot/layer della distro precedente / IF IT'S A RENAME: Forcefully inherits the exact same slot/layer as the previous distro
+      if (isRename && slotIndex.has(renameParentId)) {
+        layer = slotIndex.get(renameParentId);
       } else {
         // ALTRIMENTI (Fork o Radice): Cerca il primo slot libero disponibile / // ELSE (Fork or Root): Search for the first available free slot
         layer = !node.parent ? 0 : 1;
@@ -472,12 +513,7 @@ distros.forEach(node => {
 
 // disegna le linee che collegano padre e fork/rename
 // draw curves that link parent distros to child forks or renames
-distros.forEach(node => {
-  if (!node.parent) return;
-  const source = nodePositions.get(node.parent);
-  const target = nodePositions.get(node.id);
-  if (!source || !target) return;
-
+function drawCurveLink(source, target) {
   const startX = source.x + nodeWidth;
   const startY = source.y + nodeHeight * 0.5;
   const endX = target.x;
@@ -487,14 +523,29 @@ distros.forEach(node => {
   const controlY1 = startY;
   const controlX2 = endX - deltaX;
   const controlY2 = endY;
+  
   // definiamo una curva di Bézier per rendere le linee più leggibili
   // define a Bézier curve to make the connection lines more readable
-
   const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
   path.setAttribute('d', `M ${startX} ${startY} C ${controlX1} ${controlY1} ${controlX2} ${controlY2} ${endX} ${endY}`);
   path.setAttribute('class', 'link-path');
   path.setAttribute('marker-end', 'url(#arrowhead)');
   linkGroup.appendChild(path);
+}
+
+distros.forEach(node => {
+  if (node.parent) {
+    const source = nodePositions.get(node.parent);
+    const target = nodePositions.get(node.id);
+    if (source && target) drawCurveLink(source, target);
+  }
+  
+  const renameParentId = renamePredictorMap.get(node.id);
+  if (renameParentId) {
+    const source = nodePositions.get(renameParentId);
+    const target = nodePositions.get(node.id);
+    if (source && target) drawCurveLink(source, target);
+  }
 });
 
 let isDragging = false;
