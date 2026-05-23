@@ -119,6 +119,17 @@ const distros = [
       color: '#73ba25',
       url: 'https://en.wikipedia.org/wiki/OpenSUSE'
   },
+  {
+      id: 'arch-linux',
+      name: 'Arch Linux',
+      logo: 'logos/arch-linux.png',
+      date: '11/03/2002',
+      last_update: '23/05/2026', // Today
+      parent: null,
+      rename: null,
+      color: '#1793d1',
+      url: 'https://en.wikipedia.org/wiki/Arch_Linux'
+  },
 
     // DRAFT: usare come bozza. / DRAFT: use as a draft entry.
   {
@@ -139,7 +150,7 @@ const distros = [
       name: 'Template Distro', // etichetta visualizzata / displayed label
       logo: 'logos/draft.png', // logo distros (meglio 72x72 px) / distro logo (best 72x72 px)
       date: '01/01/1991', // data precisa in formato europeo (GG/MM/AAAA) / exact date in European format (DD/MM/YYYY)
-      last_update: '01/01/2027', // Ultimo aggiornamento / Last update
+      last_update: '01/01/2030', // Ultimo aggiornamento / Last update
       parent: null, // id del genitore se fork, altrimenti null / parent id if fork/rename, otherwise null
       rename: null, // Opzionale: mettere rename solo se la distro è stata rinominata nella sua storia / Optional: Only set rename if the distro has been renamed in its history
       color: '#000000', // colore del nodo / node color
