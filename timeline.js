@@ -597,108 +597,100 @@ distros.forEach(node => {
   }
 });
 
+
 let isDragging = false;
 let lastX = 0;
 let lastY = 0;
 let viewX = 0;
 let viewY = 0;
 let scale = 1;
-let isSyncingScroll = false;
+let rafPending = false;
+let ignoreScrollEvents = false;
+let scrollTimeout = null;
 
-// aggiorna il viewBox dell'SVG in base a pan e zoom
-function updateViewBox() {
-  const w = width / scale;
-  const h = height / scale;
-  const x = viewX / scale;
-  const y = viewY / scale;
-  // aggiorna il viewBox dell'SVG in base alle coordinate di pan/zoom
-  // update the SVG viewBox based on pan/zoom coordinates
-  svg.setAttribute('viewBox', `${x} ${y} ${w} ${h}`);
+function queueRender(source) {
+  if (rafPending) return;
+  rafPending = true;
+  
+  requestAnimationFrame(() => {
+    rafPending = false;
+    
+    
+    svg.style.width = `${width * scale}px`;
+    svg.style.height = `${height * scale}px`;
+    
+    
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    
+    if (wrap && source !== 'scroll') {
+      void wrap.scrollHeight; 
+      void wrap.scrollWidth;
+
+      ignoreScrollEvents = true;
+      clearTimeout(scrollTimeout);
+      
+      wrap.scrollLeft = viewX;
+      wrap.scrollTop = viewY;
+      
+      scrollTimeout = setTimeout(() => {
+        ignoreScrollEvents = false;
+      }, 60);
+    }
+  });
 }
 
-// limita la vista ai bordi del grafico per non oltrepassare l'SVG
-// clamp the view so the viewport stays inside the SVG bounds
 function clampViewXY() {
-  const viewW = width / scale;
-  const viewH = height / scale;
-  const maxViewX = Math.max(0, width - viewW);
-  const maxViewY = Math.max(0, height - viewH);
-  let vbX = viewX / scale;
-  let vbY = viewY / scale;
-  vbX = Math.max(0, Math.min(vbX, maxViewX));
-  vbY = Math.max(0, Math.min(vbY, maxViewY));
-  viewX = vbX * scale;
-  viewY = vbY * scale;
-}
-
-function setWrapScrollFromView() {
   if (!wrap) return;
-  isSyncingScroll = true;
-  wrap.scrollLeft = viewX / scale;
-  wrap.scrollTop = viewY / scale;
-  // attende il termine dello scroll nativo prima di riabilitare la sincronizzazione
-  // wait for native scroll to finish before re-enabling sync
-  setTimeout(() => { isSyncingScroll = false; }, 0);
-}
-
-function setViewFromWrapScroll() {
-  if (!wrap) return;
-  viewX = wrap.scrollLeft * scale;
-  viewY = wrap.scrollTop * scale;
-  clampViewXY();
-  updateViewBox();
+  
+  const maxScrollX = Math.max(0, (width * scale) - wrap.clientWidth);
+  const maxScrollY = Math.max(0, (height * scale) - wrap.clientHeight);
+  
+  viewX = Math.max(0, Math.min(viewX, maxScrollX));
+  viewY = Math.max(0, Math.min(viewY, maxScrollY));
 }
 
 function clampScale(value) {
-  // limita lo zoom fra min e max per evitare ingrandimenti o riduzioni eccessive
-  // clamp zoom between min and max to avoid excessive scales
-  return Math.min(5.2, Math.max(0.8, value));
+  return Math.min(5.2, Math.max(0.1, value));
 }
 
 function zoomTimeline(factor, focusX, focusY) {
   const newScale = clampScale(scale * factor);
   if (newScale === scale) return;
-  const rect = svg.getBoundingClientRect();
+  
+  const rect = wrap.getBoundingClientRect();
+  
   const offsetX = typeof focusX === 'number' ? focusX - rect.left : rect.width / 2;
   const offsetY = typeof focusY === 'number' ? focusY - rect.top : rect.height / 2;
-  const dx = (offsetX / scale) * (newScale - scale);
-  const dy = (offsetY / scale) * (newScale - scale);
+  
+  const ratio = newScale / scale;
+  
+  viewX = (viewX + offsetX) * ratio - offsetX;
+  viewY = (viewY + offsetY) * ratio - offsetY;
+  
   scale = newScale;
-  viewX += dx;
-  viewY += dy;
   clampViewXY();
-  updateViewBox();
-  setWrapScrollFromView();
+  queueRender('zoom');
 }
 
 function panTimeline(dx, dy) {
-  // sposta la vista all'interno del grafico secondo le coordinate dx/dy
-  // pan the view inside the chart by dx/dy amounts
   viewX += dx;
   viewY += dy;
   clampViewXY();
-  updateViewBox();
-  setWrapScrollFromView();
+  queueRender('pan');
 }
 
 function resetView() {
-  // ripristina visuale e zoom al valore predefinito
-  // reset view and zoom to default values
   scale = 1;
   viewX = 0;
   viewY = 0;
-  updateViewBox();
-  setWrapScrollFromView();
+  queueRender('reset');
 }
 
 function fitView() {
-  // adatta la vista all'intera area del grafico mantenendo le proporzioni
-  // fit the view to the full chart area while keeping proportions
   scale = Math.min(1, Math.min(wrap.clientWidth / width, wrap.clientHeight / height));
   viewX = 0;
   viewY = 0;
-  updateViewBox();
-  setWrapScrollFromView();
+  queueRender('fit');
 }
 
 const zoomInButton = document.getElementById('zoom-in');
@@ -711,153 +703,87 @@ zoomOutButton?.addEventListener('click', () => zoomTimeline(0.85));
 resetViewButton?.addEventListener('click', () => resetView());
 fitViewButton?.addEventListener('click', () => fitView());
 
-// scorciatoie da tastiera per pan e zoom
-// keyboard shortcuts for pan and zoom
 window.addEventListener('keydown', event => {
   if (event.target instanceof HTMLElement && ['INPUT', 'TEXTAREA', 'BUTTON'].includes(event.target.tagName)) return;
   switch (event.key) {
-    case 'ArrowLeft':
-      event.preventDefault();
-      panTimeline(-120, 0);
-      break;
-    case 'ArrowRight':
-      event.preventDefault();
-      panTimeline(120, 0);
-      break;
-    case 'ArrowUp':
-      event.preventDefault();
-      panTimeline(0, -120);
-      break;
-    case 'ArrowDown':
-      event.preventDefault();
-      panTimeline(0, 120);
-      break;
+    case 'ArrowLeft':  event.preventDefault(); panTimeline(-120, 0); break;
+    case 'ArrowRight': event.preventDefault(); panTimeline(120, 0); break;
+    case 'ArrowUp':    event.preventDefault(); panTimeline(0, -120); break;
+    case 'ArrowDown':  event.preventDefault(); panTimeline(0, 120); break;
     case '+':
-    case '=':
-      event.preventDefault();
-      zoomTimeline(1.15);
-      break;
-    case '-':
-      event.preventDefault();
-      zoomTimeline(0.85);
-      break;
-    case '0':
-      event.preventDefault();
-      resetView();
-      break;
+    case '=':          event.preventDefault(); zoomTimeline(1.15); break;
+    case '-':          event.preventDefault(); zoomTimeline(0.85); break;
+    case '0':          event.preventDefault(); resetView(); break;
   }
 });
 
-// panning con il drag del mouse sullo sfondo
-// pan by dragging the background with the mouse
-background.addEventListener('pointerdown', event => {
+
+function startDrag(event) {
+  if (event.target.closest && event.target.closest('g[data-id]')) return;
+  
   isDragging = true;
   lastX = event.clientX;
   lastY = event.clientY;
-  background.setPointerCapture(event.pointerId);
-  background.style.cursor = 'grabbing';
-});
-
-background.addEventListener('pointermove', event => {
-  if (!isDragging) return;
-  const dx = event.clientX - lastX;
-  const dy = event.clientY - lastY;
-  lastX = event.clientX;
-  lastY = event.clientY;
-  viewX -= dx * panSpeed;
-  viewY -= dy * panSpeed;
-  clampViewXY();
-  updateViewBox();
-  setWrapScrollFromView();
-});
-
-background.addEventListener('pointerup', event => {
-  isDragging = false;
-  background.releasePointerCapture(event.pointerId);
-  background.style.cursor = 'grab';
-});
-
-// Improved panning: start drag from anywhere on the SVG (including nodes)
-// panning anche trascinando direttamente l'SVG
-svg.style.cursor = 'grab';
-// migliorato: avvia il pan anche dal resto dell'SVG, tranne che sui nodi
-// improved: start panning from anywhere on the SVG except on nodes
-svg.addEventListener('pointerdown', event => {
-  if (event.target.closest && event.target.closest('g[data-id]')) {
-    return;
-  }
-  isDragging = true;
-  lastX = event.clientX;
-  lastY = event.clientY;
-  try { svg.setPointerCapture(event.pointerId); } catch (e) {}
-  svg.style.cursor = 'grabbing';
-  // prevent default to avoid accidental text selection
+  
+  const tracker = event.currentTarget;
+  try { tracker.setPointerCapture(event.pointerId); } catch (e) {}
+  tracker.style.cursor = 'grabbing';
   event.preventDefault();
-});
+}
 
-svg.addEventListener('pointermove', event => {
+function moveDrag(event) {
   if (!isDragging) return;
   const dx = event.clientX - lastX;
   const dy = event.clientY - lastY;
   lastX = event.clientX;
   lastY = event.clientY;
-  viewX -= dx * panSpeed;
-  viewY -= dy * panSpeed;
+
+  viewX -= dx;
+  viewY -= dy;
+  
   clampViewXY();
-  updateViewBox();
-  setWrapScrollFromView();
-});
+  queueRender('pointer');
+}
 
-svg.addEventListener('pointerup', event => {
-  // termina il panning quando il bottone del mouse viene rilasciato
-  // end panning when the mouse button is released
+function stopDrag(event) {
+  if (!isDragging) return;
   isDragging = false;
-  try { svg.releasePointerCapture(event.pointerId); } catch (e) {}
-  svg.style.cursor = 'grab';
+  const tracker = event.currentTarget;
+  try { tracker.releasePointerCapture(event.pointerId); } catch (e) {}
+  tracker.style.cursor = 'grab';
+}
+
+
+svg.style.cursor = 'grab';
+svg.addEventListener('pointerdown', startDrag);
+svg.addEventListener('pointermove', moveDrag);
+svg.addEventListener('pointerup', stopDrag);
+svg.addEventListener('pointercancel', stopDrag);
+
+
+wrap.addEventListener('scroll', () => {
+
+  if (isDragging || ignoreScrollEvents) return;
+  
+  viewX = wrap.scrollLeft;
+  viewY = wrap.scrollTop;
+  
+  clampViewXY();
+  queueRender('scroll');
 });
 
-svg.addEventListener('pointercancel', event => {
-  // termina il panning se il puntatore viene cancellato
-  // end panning if the pointer is cancelled
-  isDragging = false;
-  try { svg.releasePointerCapture(event.pointerId); } catch (e) {}
-  svg.style.cursor = 'grab';
-});
 
-// sincronizza lo scroll nativo del contenitore con il viewBox
-wrap.addEventListener('scroll', (e) => {
-  if (isSyncingScroll) return;
-  setViewFromWrapScroll();
-});
-
-// zoom con rotellina del mouse, mantenendo il punto centrale del cursore
-// mouse wheel zoom while keeping the cursor focus point fixed
 wrap.addEventListener('wheel', event => {
   event.preventDefault();
   const factor = event.deltaY > 0 ? 0.92 : 1.08;
-  const newScale = clampScale(scale * factor);
-  const rect = svg.getBoundingClientRect();
-  const offsetX = event.clientX - rect.left;
-  const offsetY = event.clientY - rect.top;
-  const dx = (offsetX / scale) * (newScale - scale);
-  const dy = (offsetY / scale) * (newScale - scale);
-  scale = newScale;
-  viewX += dx;
-  viewY += dy;
-  clampViewXY();
-  updateViewBox();
-  setWrapScrollFromView();
+  zoomTimeline(factor, event.clientX, event.clientY);
 }, { passive: false });
 
-// adatta la larghezza dell'SVG al ridimensionamento della finestra
+
 window.addEventListener('resize', () => {
-  const container = wrap.getBoundingClientRect();
-  if (container.width < width) {
-    svg.style.width = `${width}px`;
-  } else {
-    svg.style.width = '100%';
-  }
-  setWrapScrollFromView();
+  clampViewXY();
+  queueRender('resize');
 });
 
-setWrapScrollFromView();
+
+queueRender('init');
