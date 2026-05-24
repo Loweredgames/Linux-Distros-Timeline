@@ -2,6 +2,11 @@
 // Dataset of Linux distributions for the timeline.
 // Ogni oggetto rappresenta una distro con attributi di visualizzazione, date, colore e link.
 // Each object represents a distro with display attributes, dates, color, and link.
+
+// Rolling release date
+const today = new Date();
+const RollingRelease = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`; // Mette la data di oggi / set today's date
+
 const distros = [
   {
       id: 'mcc',
@@ -192,6 +197,15 @@ const distros = [
       url: 'https://en.wikipedia.org/wiki/Linux_Mint'
   },
   {
+      id: 'kde-neon',
+      name: 'KDE Neon',
+      date: '08/06/2016',
+      last_update: '16/02/2026',
+      parent: 'ubuntu',
+      color: '#21b4a2',
+      url: 'https://en.wikipedia.org/wiki/KDE_neon'
+  },
+  {
       id: 'solus-os',
       name: 'SolusOS',
       date: '09/05/2012',
@@ -280,7 +294,7 @@ const distros = [
       name: 'Arch Linux',
       logo: 'logos/arch-linux.png',
       date: '11/03/2002',
-      last_update: '24/05/2026', // Today
+      last_update: RollingRelease,
       color: '#1793d1',
       url: 'https://en.wikipedia.org/wiki/Arch_Linux'
   },
@@ -288,7 +302,7 @@ const distros = [
       id: 'arch-linux-arm',
       name: 'Arch Linux ARM',
       date: '11/03/2002',
-      last_update: '24/05/2026', // Today
+      last_update: RollingRelease,
       parent: 'arch-linux',
       color: '#17c5d1',
       url: 'https://en.wikipedia.org/wiki/Arch_Linux_ARM'
@@ -331,7 +345,7 @@ const distros = [
       name: 'Template Distro', // etichetta visualizzata / displayed label
       logo: 'logos/draft.png', // logo distros (meglio 72x72 px) / distro logo (best 72x72 px)
       date: '01/01/1991', // data precisa in formato europeo (GG/MM/AAAA) / exact date in European format (DD/MM/YYYY)
-      last_update: '01/01/2030', // Ultimo aggiornamento / Last update
+      last_update: '01/01/2000', // Ultimo aggiornamento / Last update
       parent: null, // id del genitore se fork, altrimenti null / parent id if fork/rename, otherwise null
       rename: null, // Opzionale: mettere rename solo se la distro è stata rinominata nella sua storia / Optional: Only set rename if the distro has been renamed in its history
       color: '#000000', // colore del nodo / node color
@@ -363,7 +377,7 @@ distros.forEach(distro => {
 });
 
 const yearMax = dynamicYearMax;
-const years = Array.from({ length: yearMax - yearMin + 1 }, (_, i) => yearMin + i);
+const years = Array.from({ length: yearMax - yearMin + 2 }, (_, i) => yearMin + i);
 const nodeWidth = 230;
 const nodeHeight = 56;
 const yearStep = 265;
