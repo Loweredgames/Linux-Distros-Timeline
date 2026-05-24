@@ -8,8 +8,6 @@ const distros = [
       name: 'MCC Interim Linux',
       date: '01/02/1992',
       last_update: '04/11/1996',
-      parent: null,
-      rename: null,
       color: '#273941',
       url: 'https://en.wikipedia.org/wiki/MCC_Interim_Linux'
   },
@@ -18,8 +16,6 @@ const distros = [
       name: 'Softlanding Linux System (SLS)',
       date: '01/05/1992',
       last_update: '01/12/1994',
-      parent: null,
-      rename: null,
       color: '#2410db',
       url: 'https://en.wikipedia.org/wiki/Softlanding_Linux_System'
   },
@@ -30,7 +26,6 @@ const distros = [
       date: '17/07/1993',
       last_update: '2/2/2022',
       parent: 'sls',
-      rename: null,
       color: '#546cb6',
       url: 'https://en.wikipedia.org/wiki/Slackware'
   },
@@ -40,7 +35,6 @@ const distros = [
       logo: 'logos/debian.png',
       date: '16/08/1993',
       last_update: '09/08/2025',
-      parent: null,
       color: '#d70a53',
       url: 'https://en.wikipedia.org/wiki/Debian'
   },
@@ -50,9 +44,34 @@ const distros = [
       date: '20/10/2004',
       last_update: '23/04/2026',
       parent: 'debian',
-      rename: null,
       color: '#774121',
       url: 'https://en.wikipedia.org/wiki/Ubuntu'
+  },
+  {
+      id: 'solus-os',
+      name: 'SolusOS',
+      date: '09/05/2012',
+      last_update: '25/10/2013',
+      parent: 'debian',
+      color: '#888888',
+      url: 'https://distrowatch.com/table.php?distribution=solusos'
+  },
+  {
+      id: 'evolve-os',
+      name: 'Evolve OS',
+      date: '20/02/2014',
+      last_update: '27/12/2015',
+      rename: 'solus',
+      color: '#5f5f5f',
+      url: 'https://en.wikipedia.org/wiki/Solus_(operating_system)'
+  },
+  {
+      id: 'solus',
+      name: 'Solus',
+      date: '27/12/2015',
+      last_update: '18/04/2026',
+      color: '#5f5f5f',
+      url: 'https://en.wikipedia.org/wiki/Solus_(operating_system)'
   },
   {
       id: 'redhat-linux',
@@ -60,7 +79,6 @@ const distros = [
       logo: 'logos/redhat-linux.png',
       date: '13/05/1995',
       last_update: '31/03/2003',
-      parent: null,
       rename: 'redhat-enterprise-linux',
       color: '#ee0000',
       url: 'https://en.wikipedia.org/wiki/Red_Hat_Linux'
@@ -72,7 +90,6 @@ const distros = [
       date: '31/03/2003',
       last_update: '19/05/2026',
       parent: 'fedora-core',
-      rename: null,
       color: '#ee0000',
       url: 'https://en.wikipedia.org/wiki/Red_Hat_Enterprise_Linux'
   },
@@ -82,7 +99,6 @@ const distros = [
       logo: 'logos/fedora.png',
       date: '04/11/2003',
       last_update: '31/07/2007',
-      parent: null,
       rename: 'fedora-linux',
       color: '#51a2da',
       url: 'https://en.wikipedia.org/wiki/Fedora_Linux'
@@ -92,8 +108,6 @@ const distros = [
       name: 'Fedora Core',
       date: '31/07/2007',
       last_update: '28/04/2026',
-      parent: null,
-      rename: null,
       color: '#51a2da',
       url: 'https://en.wikipedia.org/wiki/Fedora_Linux'
   },
@@ -114,10 +128,35 @@ const distros = [
       logo: 'logos/opensuse.png',
       date: '07/12/2006',
       last_update: '01/10/2025',
-      parent: null,
-      rename: null,
       color: '#73ba25',
       url: 'https://en.wikipedia.org/wiki/OpenSUSE'
+  },
+  {
+      id: 'arch-linux',
+      name: 'Arch Linux',
+      logo: 'logos/arch-linux.png',
+      date: '11/03/2002',
+      last_update: '01/01/2030', // Today
+      color: '#1793d1',
+      url: 'https://en.wikipedia.org/wiki/Arch_Linux'
+  },
+  {
+      id: 'android',
+      name: 'Android',
+      logo: 'logos/android.png',
+      date: '23/03/2008',
+      last_update: '10/06/2025',
+      color: '#43a760',
+      url: 'https://en.wikipedia.org/wiki/Android_(operating_system)'
+  },
+  {
+      id: 'android-x86',
+      name: 'Android-x86',
+      date: '29/07/2009',
+      last_update: '27/02/2020',
+      parent: 'android',
+      color: '#92ec3e',
+      url: 'https://en.wikipedia.org/wiki/Android-x86'
   },
 
     // DRAFT: usare come bozza. / DRAFT: use as a draft entry.
@@ -281,16 +320,26 @@ let maxSlots = 1;
 const overlapPadding = 18;
 rowNodes.forEach(nodes => {
   const layers = [];
-  nodes
-    .map(node => {
       // usa solo la data precisa fornita in node.date
       // use only the precise date given in node.date
+  nodes
+    .map(node => {
       const nodeDate = parseDistroDate(node.date);
       const daysFromStart = Math.round((nodeDate - startDate) / msPerDay);
-      return { node, x: marginLeft + daysFromStart * dayPx };
+      const x = marginLeft + daysFromStart * dayPx;
+
+      // Calcola la fine reale del nodo sull'asse X, includendo la linea del last_update / Calculate the real end of the node on the X axis, including the last_update line
+      let endX = x + nodeWidth;
+      const updateDate = parseDistroDate(node.last_update);
+      if (isValidDate(updateDate) && updateDate > nodeDate) {
+         const updateX = marginLeft + Math.round((updateDate - startDate) / msPerDay) * dayPx;
+         endX = Math.max(endX, updateX + (nodeWidth * 0.5));
+      }
+
+      return { node, x, endX };
     })
     .sort((a, b) => a.x - b.x)
-    .forEach(({ node, x }) => {
+    .forEach(({ node, x, endX }) => {
       const renameParentId = renamePredictorMap.get(node.id);
       const isRename = !!renameParentId;
       let layer;
@@ -300,18 +349,18 @@ rowNodes.forEach(nodes => {
         layer = slotIndex.get(renameParentId);
       } else {
         // ALTRIMENTI (Fork o Radice): Cerca il primo slot libero disponibile / // ELSE (Fork or Root): Search for the first available free slot
-        layer = !node.parent ? 0 : 1;
+        layer = !node.parent ? 0 : 2;
         while (true) {
           const collision = (layers[layer] || []).some(prev => {
-            return !(prev.x + nodeWidth + overlapPadding < x || x + nodeWidth + overlapPadding < prev.x);
+            return !(prev.endX + overlapPadding < x || endX + overlapPadding < prev.x);
           });
           if (!collision) break;
-          layer += 1;
+          layer += 2; // Se c'è collisione, scende di 2 livelli / If there is a collision, it goes down 2 levels
         }
       }
 
       if (!layers[layer]) layers[layer] = [];
-      layers[layer].push({ x, id: node.id });
+      layers[layer].push({ x, endX, id: node.id });
       slotIndex.set(node.id, layer);
       maxSlots = Math.max(maxSlots, layer + 1);
     });
@@ -548,110 +597,111 @@ distros.forEach(node => {
   }
 });
 
+// Set variabili / Set variables
 let isDragging = false;
 let lastX = 0;
 let lastY = 0;
 let viewX = 0;
 let viewY = 0;
 let scale = 1;
-let isSyncingScroll = false;
+let rafPending = false;
+let ignoreScrollEvents = false;
+let scrollTimeout = null;
 
-// aggiorna il viewBox dell'SVG in base a pan e zoom
-function updateViewBox() {
-  const w = width / scale;
-  const h = height / scale;
-  const x = viewX / scale;
-  const y = viewY / scale;
-  // aggiorna il viewBox dell'SVG in base alle coordinate di pan/zoom
-  // update the SVG viewBox based on pan/zoom coordinates
-  svg.setAttribute('viewBox', `${x} ${y} ${w} ${h}`);
+// Gestisce il rendering tramite requestAnimationFrame per ottimizzare le prestazioni / Handles rendering via requestAnimationFrame to optimize performance
+function queueRender(source) {
+  if (rafPending) return;
+  rafPending = true;
+  
+  requestAnimationFrame(() => {
+    rafPending = false;
+    
+    
+    svg.style.width = `${width * scale}px`;
+    svg.style.height = `${height * scale}px`;
+    
+    
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    
+    // Aggiorna la posizione dello scroll se non proviene da un evento scroll / Updates scroll position if the source is not a scroll event
+    if (wrap && source !== 'scroll') {
+      void wrap.scrollHeight; 
+      void wrap.scrollWidth;
+
+      ignoreScrollEvents = true;
+      clearTimeout(scrollTimeout);
+      
+      wrap.scrollLeft = viewX;
+      wrap.scrollTop = viewY;
+      
+      scrollTimeout = setTimeout(() => {
+        ignoreScrollEvents = false;
+      }, 60);
+    }
+  });
 }
 
-// limita la vista ai bordi del grafico per non oltrepassare l'SVG
-// clamp the view so the viewport stays inside the SVG bounds
+// Limita le coordinate della vista ai bordi del contenitore / Clamps view coordinates to container boundaries
 function clampViewXY() {
-  const viewW = width / scale;
-  const viewH = height / scale;
-  const maxViewX = Math.max(0, width - viewW);
-  const maxViewY = Math.max(0, height - viewH);
-  let vbX = viewX / scale;
-  let vbY = viewY / scale;
-  vbX = Math.max(0, Math.min(vbX, maxViewX));
-  vbY = Math.max(0, Math.min(vbY, maxViewY));
-  viewX = vbX * scale;
-  viewY = vbY * scale;
-}
-
-function setWrapScrollFromView() {
   if (!wrap) return;
-  isSyncingScroll = true;
-  wrap.scrollLeft = viewX / scale;
-  wrap.scrollTop = viewY / scale;
-  // attende il termine dello scroll nativo prima di riabilitare la sincronizzazione
-  // wait for native scroll to finish before re-enabling sync
-  setTimeout(() => { isSyncingScroll = false; }, 0);
+  
+  const maxScrollX = Math.max(0, (width * scale) - wrap.clientWidth);
+  const maxScrollY = Math.max(0, (height * scale) - wrap.clientHeight);
+  
+  viewX = Math.max(0, Math.min(viewX, maxScrollX));
+  viewY = Math.max(0, Math.min(viewY, maxScrollY));
 }
 
-function setViewFromWrapScroll() {
-  if (!wrap) return;
-  viewX = wrap.scrollLeft * scale;
-  viewY = wrap.scrollTop * scale;
-  clampViewXY();
-  updateViewBox();
-}
-
+// Limita il fattore di scala tra 0.1 e 5.2 / Clamps the scale factor between 0.1 and 5.2
 function clampScale(value) {
-  // limita lo zoom fra min e max per evitare ingrandimenti o riduzioni eccessive
-  // clamp zoom between min and max to avoid excessive scales
-  return Math.min(5.2, Math.max(0.8, value));
+  return Math.min(5.2, Math.max(0.1, value));
 }
 
+// Gestisce lo zoom della timeline rispetto a un punto focale / Handles timeline zooming relative to a focal point
 function zoomTimeline(factor, focusX, focusY) {
   const newScale = clampScale(scale * factor);
   if (newScale === scale) return;
-  const rect = svg.getBoundingClientRect();
+  
+  const rect = wrap.getBoundingClientRect();
+  
   const offsetX = typeof focusX === 'number' ? focusX - rect.left : rect.width / 2;
   const offsetY = typeof focusY === 'number' ? focusY - rect.top : rect.height / 2;
-  const dx = (offsetX / scale) * (newScale - scale);
-  const dy = (offsetY / scale) * (newScale - scale);
+  
+  const ratio = newScale / scale;
+  
+  viewX = (viewX + offsetX) * ratio - offsetX;
+  viewY = (viewY + offsetY) * ratio - offsetY;
+  
   scale = newScale;
-  viewX += dx;
-  viewY += dy;
   clampViewXY();
-  updateViewBox();
-  setWrapScrollFromView();
+  queueRender('zoom');
 }
 
+// Sposta la vista (pan) in base ai delta x e y / Pans the view based on delta x and y
 function panTimeline(dx, dy) {
-  // sposta la vista all'interno del grafico secondo le coordinate dx/dy
-  // pan the view inside the chart by dx/dy amounts
   viewX += dx;
   viewY += dy;
   clampViewXY();
-  updateViewBox();
-  setWrapScrollFromView();
+  queueRender('pan');
 }
 
+// Resetta la scala e la posizione della vista / Resets scale and view position
 function resetView() {
-  // ripristina visuale e zoom al valore predefinito
-  // reset view and zoom to default values
   scale = 1;
   viewX = 0;
   viewY = 0;
-  updateViewBox();
-  setWrapScrollFromView();
+  queueRender('reset');
 }
 
+// Adatta la vista per far entrare tutto il contenuto / Fits the view to show all content
 function fitView() {
-  // adatta la vista all'intera area del grafico mantenendo le proporzioni
-  // fit the view to the full chart area while keeping proportions
   scale = Math.min(1, Math.min(wrap.clientWidth / width, wrap.clientHeight / height));
   viewX = 0;
   viewY = 0;
-  updateViewBox();
-  setWrapScrollFromView();
+  queueRender('fit');
 }
 
+// Setup dei pulsanti di controllo / Control buttons setup
 const zoomInButton = document.getElementById('zoom-in');
 const zoomOutButton = document.getElementById('zoom-out');
 const resetViewButton = document.getElementById('reset-view');
@@ -662,153 +712,90 @@ zoomOutButton?.addEventListener('click', () => zoomTimeline(0.85));
 resetViewButton?.addEventListener('click', () => resetView());
 fitViewButton?.addEventListener('click', () => fitView());
 
-// scorciatoie da tastiera per pan e zoom
-// keyboard shortcuts for pan and zoom
+// Gestione dei comandi da tastiera / Keyboard shortcuts handling
 window.addEventListener('keydown', event => {
   if (event.target instanceof HTMLElement && ['INPUT', 'TEXTAREA', 'BUTTON'].includes(event.target.tagName)) return;
   switch (event.key) {
-    case 'ArrowLeft':
-      event.preventDefault();
-      panTimeline(-120, 0);
-      break;
-    case 'ArrowRight':
-      event.preventDefault();
-      panTimeline(120, 0);
-      break;
-    case 'ArrowUp':
-      event.preventDefault();
-      panTimeline(0, -120);
-      break;
-    case 'ArrowDown':
-      event.preventDefault();
-      panTimeline(0, 120);
-      break;
+    case 'ArrowLeft':  event.preventDefault(); panTimeline(-120, 0); break;
+    case 'ArrowRight': event.preventDefault(); panTimeline(120, 0); break;
+    case 'ArrowUp':    event.preventDefault(); panTimeline(0, -120); break;
+    case 'ArrowDown':  event.preventDefault(); panTimeline(0, 120); break;
     case '+':
-    case '=':
-      event.preventDefault();
-      zoomTimeline(1.15);
-      break;
-    case '-':
-      event.preventDefault();
-      zoomTimeline(0.85);
-      break;
-    case '0':
-      event.preventDefault();
-      resetView();
-      break;
+    case '=':          event.preventDefault(); zoomTimeline(1.15); break;
+    case '-':          event.preventDefault(); zoomTimeline(0.85); break;
+    case '0':          event.preventDefault(); resetView(); break;
   }
 });
 
-// panning con il drag del mouse sullo sfondo
-// pan by dragging the background with the mouse
-background.addEventListener('pointerdown', event => {
+// Inizia l'azione di trascinamento (drag) / Starts dragging action
+function startDrag(event) {
+  if (event.target.closest && event.target.closest('g[data-id]')) return;
+  
   isDragging = true;
   lastX = event.clientX;
   lastY = event.clientY;
-  background.setPointerCapture(event.pointerId);
-  background.style.cursor = 'grabbing';
-});
-
-background.addEventListener('pointermove', event => {
-  if (!isDragging) return;
-  const dx = event.clientX - lastX;
-  const dy = event.clientY - lastY;
-  lastX = event.clientX;
-  lastY = event.clientY;
-  viewX -= dx * panSpeed;
-  viewY -= dy * panSpeed;
-  clampViewXY();
-  updateViewBox();
-  setWrapScrollFromView();
-});
-
-background.addEventListener('pointerup', event => {
-  isDragging = false;
-  background.releasePointerCapture(event.pointerId);
-  background.style.cursor = 'grab';
-});
-
-// Improved panning: start drag from anywhere on the SVG (including nodes)
-// panning anche trascinando direttamente l'SVG
-svg.style.cursor = 'grab';
-// migliorato: avvia il pan anche dal resto dell'SVG, tranne che sui nodi
-// improved: start panning from anywhere on the SVG except on nodes
-svg.addEventListener('pointerdown', event => {
-  if (event.target.closest && event.target.closest('g[data-id]')) {
-    return;
-  }
-  isDragging = true;
-  lastX = event.clientX;
-  lastY = event.clientY;
-  try { svg.setPointerCapture(event.pointerId); } catch (e) {}
-  svg.style.cursor = 'grabbing';
-  // prevent default to avoid accidental text selection
+  
+  const tracker = event.currentTarget;
+  try { tracker.setPointerCapture(event.pointerId); } catch (e) {}
+  tracker.style.cursor = 'grabbing';
   event.preventDefault();
-});
+}
 
-svg.addEventListener('pointermove', event => {
+// Gestisce il movimento durante il trascinamento / Handles movement during dragging
+function moveDrag(event) {
   if (!isDragging) return;
   const dx = event.clientX - lastX;
   const dy = event.clientY - lastY;
   lastX = event.clientX;
   lastY = event.clientY;
-  viewX -= dx * panSpeed;
-  viewY -= dy * panSpeed;
+
+  viewX -= dx;
+  viewY -= dy;
+  
   clampViewXY();
-  updateViewBox();
-  setWrapScrollFromView();
-});
+  queueRender('pointer');
+}
 
-svg.addEventListener('pointerup', event => {
-  // termina il panning quando il bottone del mouse viene rilasciato
-  // end panning when the mouse button is released
+// Termina l'azione di trascinamento / Ends dragging action
+function stopDrag(event) {
+  if (!isDragging) return;
   isDragging = false;
-  try { svg.releasePointerCapture(event.pointerId); } catch (e) {}
-  svg.style.cursor = 'grab';
+  const tracker = event.currentTarget;
+  try { tracker.releasePointerCapture(event.pointerId); } catch (e) {}
+  tracker.style.cursor = 'grab';
+}
+
+// Setup eventi puntatore / Pointer events setup
+svg.style.cursor = 'grab';
+svg.addEventListener('pointerdown', startDrag);
+svg.addEventListener('pointermove', moveDrag);
+svg.addEventListener('pointerup', stopDrag);
+svg.addEventListener('pointercancel', stopDrag);
+
+// Gestione dello scroll manuale del contenitore / Handles manual scroll of the container
+wrap.addEventListener('scroll', () => {
+
+  if (isDragging || ignoreScrollEvents) return;
+  
+  viewX = wrap.scrollLeft;
+  viewY = wrap.scrollTop;
+  
+  clampViewXY();
+  queueRender('scroll');
 });
 
-svg.addEventListener('pointercancel', event => {
-  // termina il panning se il puntatore viene cancellato
-  // end panning if the pointer is cancelled
-  isDragging = false;
-  try { svg.releasePointerCapture(event.pointerId); } catch (e) {}
-  svg.style.cursor = 'grab';
-});
-
-// sincronizza lo scroll nativo del contenitore con il viewBox
-wrap.addEventListener('scroll', (e) => {
-  if (isSyncingScroll) return;
-  setViewFromWrapScroll();
-});
-
-// zoom con rotellina del mouse, mantenendo il punto centrale del cursore
-// mouse wheel zoom while keeping the cursor focus point fixed
+// Gestione dello zoom tramite rotella del mouse / Handles zooming via mouse wheel
 wrap.addEventListener('wheel', event => {
   event.preventDefault();
   const factor = event.deltaY > 0 ? 0.92 : 1.08;
-  const newScale = clampScale(scale * factor);
-  const rect = svg.getBoundingClientRect();
-  const offsetX = event.clientX - rect.left;
-  const offsetY = event.clientY - rect.top;
-  const dx = (offsetX / scale) * (newScale - scale);
-  const dy = (offsetY / scale) * (newScale - scale);
-  scale = newScale;
-  viewX += dx;
-  viewY += dy;
-  clampViewXY();
-  updateViewBox();
-  setWrapScrollFromView();
+  zoomTimeline(factor, event.clientX, event.clientY);
 }, { passive: false });
 
-// adatta la larghezza dell'SVG al ridimensionamento della finestra
+// Gestione del ridimensionamento finestra / Handles window resize
 window.addEventListener('resize', () => {
-  const container = wrap.getBoundingClientRect();
-  if (container.width < width) {
-    svg.style.width = `${width}px`;
-  } else {
-    svg.style.width = '100%';
-  }
-  setWrapScrollFromView();
+  clampViewXY();
+  queueRender('resize');
 });
 
-setWrapScrollFromView();
+// Rendering iniziale / Initial rendering
+queueRender('init');
