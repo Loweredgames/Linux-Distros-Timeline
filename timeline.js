@@ -48,7 +48,7 @@ const distros = [
       url: 'https://en.wikipedia.org/wiki/Ubuntu'
   },
   {
-      id: 'solus-os', // si unisce e non dovrebbe farlo
+      id: 'solus-os',
       name: 'SolusOS',
       date: '09/05/2012',
       last_update: '25/10/2013',
