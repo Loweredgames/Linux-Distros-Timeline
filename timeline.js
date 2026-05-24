@@ -130,6 +130,24 @@ const distros = [
       color: '#1793d1',
       url: 'https://en.wikipedia.org/wiki/Arch_Linux'
   },
+  {
+      id: 'android',
+      name: 'Android',
+      logo: 'logos/android.png',
+      date: '23/03/2008',
+      last_update: '10/06/2025',
+      color: '#43a760',
+      url: 'https://en.wikipedia.org/wiki/Android_(operating_system)'
+  },
+  {
+      id: 'android-x86',
+      name: 'Android-x86',
+      date: '29/07/2009',
+      last_update: '27/02/2020',
+      parent: 'android',
+      color: '#92ec3e',
+      url: 'https://en.wikipedia.org/wiki/Android-x86'
+  },
 
     // DRAFT: usare come bozza. / DRAFT: use as a draft entry.
   {
