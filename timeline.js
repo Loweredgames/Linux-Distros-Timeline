@@ -8,8 +8,6 @@ const distros = [
       name: 'MCC Interim Linux',
       date: '01/02/1992',
       last_update: '04/11/1996',
-      parent: null,
-      rename: null,
       color: '#273941',
       url: 'https://en.wikipedia.org/wiki/MCC_Interim_Linux'
   },
@@ -18,8 +16,6 @@ const distros = [
       name: 'Softlanding Linux System (SLS)',
       date: '01/05/1992',
       last_update: '01/12/1994',
-      parent: null,
-      rename: null,
       color: '#2410db',
       url: 'https://en.wikipedia.org/wiki/Softlanding_Linux_System'
   },
@@ -30,7 +26,6 @@ const distros = [
       date: '17/07/1993',
       last_update: '2/2/2022',
       parent: 'sls',
-      rename: null,
       color: '#546cb6',
       url: 'https://en.wikipedia.org/wiki/Slackware'
   },
@@ -40,7 +35,6 @@ const distros = [
       logo: 'logos/debian.png',
       date: '16/08/1993',
       last_update: '09/08/2025',
-      parent: null,
       color: '#d70a53',
       url: 'https://en.wikipedia.org/wiki/Debian'
   },
@@ -50,9 +44,34 @@ const distros = [
       date: '20/10/2004',
       last_update: '23/04/2026',
       parent: 'debian',
-      rename: null,
       color: '#774121',
       url: 'https://en.wikipedia.org/wiki/Ubuntu'
+  },
+  {
+      id: 'solus-os', // si unisce e non dovrebbe farlo
+      name: 'SolusOS',
+      date: '09/05/2012',
+      last_update: '25/10/2013',
+      parent: 'debian',
+      color: '#888888',
+      url: 'https://distrowatch.com/table.php?distribution=solusos'
+  },
+  {
+      id: 'evolve-os',
+      name: 'Evolve OS',
+      date: '20/02/2014',
+      last_update: '27/12/2015',
+      rename: 'solus',
+      color: '#5f5f5f',
+      url: 'https://en.wikipedia.org/wiki/Solus_(operating_system)'
+  },
+  {
+      id: 'solus',
+      name: 'Solus',
+      date: '27/12/2015',
+      last_update: '18/04/2026',
+      color: '#5f5f5f',
+      url: 'https://en.wikipedia.org/wiki/Solus_(operating_system)'
   },
   {
       id: 'redhat-linux',
@@ -60,7 +79,6 @@ const distros = [
       logo: 'logos/redhat-linux.png',
       date: '13/05/1995',
       last_update: '31/03/2003',
-      parent: null,
       rename: 'redhat-enterprise-linux',
       color: '#ee0000',
       url: 'https://en.wikipedia.org/wiki/Red_Hat_Linux'
@@ -72,7 +90,6 @@ const distros = [
       date: '31/03/2003',
       last_update: '19/05/2026',
       parent: 'fedora-core',
-      rename: null,
       color: '#ee0000',
       url: 'https://en.wikipedia.org/wiki/Red_Hat_Enterprise_Linux'
   },
@@ -82,7 +99,6 @@ const distros = [
       logo: 'logos/fedora.png',
       date: '04/11/2003',
       last_update: '31/07/2007',
-      parent: null,
       rename: 'fedora-linux',
       color: '#51a2da',
       url: 'https://en.wikipedia.org/wiki/Fedora_Linux'
@@ -92,8 +108,6 @@ const distros = [
       name: 'Fedora Core',
       date: '31/07/2007',
       last_update: '28/04/2026',
-      parent: null,
-      rename: null,
       color: '#51a2da',
       url: 'https://en.wikipedia.org/wiki/Fedora_Linux'
   },
@@ -114,8 +128,6 @@ const distros = [
       logo: 'logos/opensuse.png',
       date: '07/12/2006',
       last_update: '01/10/2025',
-      parent: null,
-      rename: null,
       color: '#73ba25',
       url: 'https://en.wikipedia.org/wiki/OpenSUSE'
   },
@@ -125,8 +137,6 @@ const distros = [
       logo: 'logos/arch-linux.png',
       date: '11/03/2002',
       last_update: '01/01/2030', // Today
-      parent: null,
-      rename: null,
       color: '#1793d1',
       url: 'https://en.wikipedia.org/wiki/Arch_Linux'
   },
@@ -310,16 +320,26 @@ let maxSlots = 1;
 const overlapPadding = 18;
 rowNodes.forEach(nodes => {
   const layers = [];
-  nodes
-    .map(node => {
       // usa solo la data precisa fornita in node.date
       // use only the precise date given in node.date
+  nodes
+    .map(node => {
       const nodeDate = parseDistroDate(node.date);
       const daysFromStart = Math.round((nodeDate - startDate) / msPerDay);
-      return { node, x: marginLeft + daysFromStart * dayPx };
+      const x = marginLeft + daysFromStart * dayPx;
+
+      // Calcola la fine reale del nodo sull'asse X, includendo la linea del last_update / Calculate the real end of the node on the X axis, including the last_update line
+      let endX = x + nodeWidth;
+      const updateDate = parseDistroDate(node.last_update);
+      if (isValidDate(updateDate) && updateDate > nodeDate) {
+         const updateX = marginLeft + Math.round((updateDate - startDate) / msPerDay) * dayPx;
+         endX = Math.max(endX, updateX + (nodeWidth * 0.5));
+      }
+
+      return { node, x, endX };
     })
     .sort((a, b) => a.x - b.x)
-    .forEach(({ node, x }) => {
+    .forEach(({ node, x, endX }) => {
       const renameParentId = renamePredictorMap.get(node.id);
       const isRename = !!renameParentId;
       let layer;
@@ -329,18 +349,18 @@ rowNodes.forEach(nodes => {
         layer = slotIndex.get(renameParentId);
       } else {
         // ALTRIMENTI (Fork o Radice): Cerca il primo slot libero disponibile / // ELSE (Fork or Root): Search for the first available free slot
-        layer = !node.parent ? 0 : 1;
+        layer = !node.parent ? 0 : 2;
         while (true) {
           const collision = (layers[layer] || []).some(prev => {
-            return !(prev.x + nodeWidth + overlapPadding < x || x + nodeWidth + overlapPadding < prev.x);
+            return !(prev.endX + overlapPadding < x || endX + overlapPadding < prev.x);
           });
           if (!collision) break;
-          layer += 1;
+          layer += 2; // Se c'è collisione, scende di 2 livelli / If there is a collision, it goes down 2 levels
         }
       }
 
       if (!layers[layer]) layers[layer] = [];
-      layers[layer].push({ x, id: node.id });
+      layers[layer].push({ x, endX, id: node.id });
       slotIndex.set(node.id, layer);
       maxSlots = Math.max(maxSlots, layer + 1);
     });
