@@ -48,6 +48,96 @@ const distros = [
       url: 'https://en.wikipedia.org/wiki/Ubuntu'
   },
   {
+      id: 'edubuntu',
+      name: 'Edubuntu',
+      date: '13/11/2005',
+      last_update: '23/04/2026',
+      parent: 'ubuntu',
+      color: '#d60f0f',
+      url: 'https://en.wikipedia.org/wiki/Edubuntu'
+  },
+  {
+      id: 'gobuntu',
+      name: 'Gobuntu',
+      date: '18/10/2007',
+      last_update: '01/06/2008',
+      parent: 'ubuntu',
+      color: '#df6400',
+      url: 'https://en.wikipedia.org/wiki/Gobuntu'
+  },
+  {
+      id: 'kubuntu',
+      name: 'Kubuntu',
+      date: '08/04/2005',
+      last_update: '23/04/2026',
+      parent: 'ubuntu',
+      color: '#4785cc',
+      url: 'https://en.wikipedia.org/wiki/Kubuntu'
+  },
+  {
+      id: 'lubuntu',
+      name: 'Lubuntu',
+      date: '30/10/2008',
+      last_update: '23/04/2026',
+      parent: 'ubuntu',
+      color: '#1a35ce',
+      url: 'https://en.wikipedia.org/wiki/Lubuntu'
+  },
+  {
+      id: 'mythbuntu',
+      name: 'Mythbuntu',
+      date: '22/10/2007',
+      last_update: '20/04/2018',
+      parent: 'ubuntu',
+      color: '#c26d3c',
+      url: 'https://en.wikipedia.org/wiki/Mythbuntu'
+  },
+  {
+      id: 'ubuntu-budgie',
+      name: 'Ubuntu Budgie',
+      date: '25/04/2016',
+      last_update: '23/04/2026',
+      parent: 'ubuntu',
+      color: '#bdb6b6',
+      url: 'https://en.wikipedia.org/wiki/Ubuntu_Budgie'
+  },
+  {
+      id: 'ubuntu-cinnamon',
+      name: 'Ubuntu Cinnamon',
+      date: '04/12/2019',
+      last_update: '23/04/2026',
+      parent: 'ubuntu',
+      color: '#aa7b60',
+      url: 'https://en.wikipedia.org/wiki/Ubuntu_Cinnamon'
+  },
+  {
+      id: 'ubuntu-gnome',
+      name: 'Ubuntu GNOME',
+      date: '18/10/2012',
+      last_update: '04/12/2017',
+      parent: 'ubuntu',
+      color: '#222488',
+      url: 'https://en.wikipedia.org/wiki/Ubuntu_GNOME'
+  },
+  {
+      id: 'ubuntu-jeOS',
+      name: 'Ubuntu JeOS',
+      date: '30/10/2008',
+      last_update: '18/10/2012',
+      parent: 'ubuntu',
+      color: '#302d2d',
+      url: 'https://en.wikipedia.org/wiki/Ubuntu_JeOS'
+  },
+  {
+      id: 'ubuntu-kylin',
+      name: 'Ubuntu Kylin',
+      date: '25/04/2013',
+      last_update: '23/04/2026',
+      parent: 'ubuntu',
+      color: '#c2a25e',
+      url: 'https://en.wikipedia.org/wiki/Ubuntu_Kylin'
+  },
+  {
       id: 'solus-os',
       name: 'SolusOS',
       date: '09/05/2012',
@@ -139,6 +229,15 @@ const distros = [
       last_update: '24/05/2026', // Today
       color: '#1793d1',
       url: 'https://en.wikipedia.org/wiki/Arch_Linux'
+  },
+  {
+      id: 'arch-linux-arm',
+      name: 'Arch Linux ARM',
+      date: '11/03/2002',
+      last_update: '24/05/2026', // Today
+      parent: 'arch-linux',
+      color: '#17c5d1',
+      url: 'https://en.wikipedia.org/wiki/Arch_Linux_ARM'
   },
   {
       id: 'android',
@@ -404,6 +503,8 @@ svg.appendChild(gridGroup);
 years.forEach(year => {
   const yearDate = new Date(year, 0, 1);
   const x = marginLeft + Math.round((yearDate - startDate) / msPerDay) * dayPx + nodeWidth * 0.5;
+
+  // Disegna la linea nell'esatta posizione di inizio anno (x) / Draw the line at the exact position of the beginning of the year (x)
   const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
   line.setAttribute('x1', x);
   line.setAttribute('x2', x);
@@ -412,17 +513,24 @@ years.forEach(year => {
   line.setAttribute('class', 'grid-line');
   gridGroup.appendChild(line);
 
+  // Calcola la posizione dell'anno successivo per trovare il centro / Calculate the position of the next year to find the center
+  const nextYearDate = new Date(year + 1, 0, 1);
+  const nextX = marginLeft + Math.round((nextYearDate - startDate) / msPerDay) * dayPx + nodeWidth * 0.5;
+  const textX = (x + nextX) / 2; // Questo è il punto esattamente a metà tra le due linee dell'anno / This is the point exactly halfway between the two year lines
+
   const topLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-  topLabel.setAttribute('x', x);
+  topLabel.setAttribute('x', textX);
   topLabel.setAttribute('y', marginTop - 40);
   topLabel.setAttribute('class', 'year-label');
+  topLabel.setAttribute('text-anchor', 'middle');
   topLabel.textContent = year;
   gridGroup.appendChild(topLabel);
 
   const bottomLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-  bottomLabel.setAttribute('x', x);
+  bottomLabel.setAttribute('x', textX);
   bottomLabel.setAttribute('y', height - marginBottom + 34);
   bottomLabel.setAttribute('class', 'year-label');
+  bottomLabel.setAttribute('text-anchor', 'middle');
   bottomLabel.textContent = year;
   gridGroup.appendChild(bottomLabel);
 });
