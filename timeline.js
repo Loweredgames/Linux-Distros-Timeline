@@ -48,6 +48,15 @@ const distros = [
       url: 'https://en.wikipedia.org/wiki/Ubuntu'
   },
   {
+      id: 'ubuntu-studio',
+      name: 'Ubuntu Studio',
+      date: '10/05/2007',
+      last_update: '23/04/2026',
+      parent: 'ubuntu',
+      color: '#214677',
+      url: 'https://en.wikipedia.org/wiki/Ubuntu_Studio'
+  },
+  {
       id: 'edubuntu',
       name: 'Edubuntu',
       date: '13/11/2005',
@@ -136,6 +145,51 @@ const distros = [
       parent: 'ubuntu',
       color: '#c2a25e',
       url: 'https://en.wikipedia.org/wiki/Ubuntu_Kylin'
+  },
+  {
+      id: 'ubuntu-mate',
+      name: 'Ubuntu MATE',
+      date: '23/10/2014',
+      last_update: '07/10/2025',
+      parent: 'ubuntu',
+      color: '#88d62f',
+      url: 'https://en.wikipedia.org/wiki/Ubuntu_MATE'
+  },
+  {
+      id: 'xubuntu',
+      name: 'Xubuntu',
+      date: '22/06/2006',
+      last_update: '23/04/2026',
+      parent: 'ubuntu',
+      color: '#2d65ff',
+      url: 'https://en.wikipedia.org/wiki/Xubuntu'
+  },
+  {
+      id: 'ubuntu-unity',
+      name: 'Ubuntu Unity',
+      date: '07/05/2020',
+      last_update: '23/04/2026',
+      parent: 'ubuntu',
+      color: '#9a2fd8',
+      url: 'https://en.wikipedia.org/wiki/Ubuntu_Unity'
+  },
+  {
+      id: 'linux-mint',
+      name: 'Linux Mint',
+      date: '27/08/2006',
+      last_update: '13/01/2026',
+      parent: 'ubuntu',
+      color: '#72a15f',
+      url: 'https://en.wikipedia.org/wiki/Linux_Mint'
+  },
+  {
+      id: 'linux-mint-de',
+      name: 'Linux Mint Debian Edition',
+      date: '01/01/2010',
+      last_update: '14/10/2025',
+      parent: 'debian',
+      color: '#a16c5f',
+      url: 'https://en.wikipedia.org/wiki/Linux_Mint'
   },
   {
       id: 'solus-os',
