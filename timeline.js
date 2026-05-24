@@ -597,7 +597,7 @@ distros.forEach(node => {
   }
 });
 
-
+// Set variabili / Set variables
 let isDragging = false;
 let lastX = 0;
 let lastY = 0;
@@ -608,6 +608,8 @@ let rafPending = false;
 let ignoreScrollEvents = false;
 let scrollTimeout = null;
 
+// Gestisce il rendering tramite requestAnimationFrame per ottimizzare le prestazioni
+// Handles rendering via requestAnimationFrame to optimize performance
 function queueRender(source) {
   if (rafPending) return;
   rafPending = true;
@@ -622,6 +624,8 @@ function queueRender(source) {
     
     svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
     
+    // Aggiorna la posizione dello scroll se non proviene da un evento scroll
+    // Updates scroll position if the source is not a scroll event
     if (wrap && source !== 'scroll') {
       void wrap.scrollHeight; 
       void wrap.scrollWidth;
@@ -639,6 +643,8 @@ function queueRender(source) {
   });
 }
 
+// Limita le coordinate della vista ai bordi del contenitore
+// Clamps view coordinates to container boundaries
 function clampViewXY() {
   if (!wrap) return;
   
@@ -649,10 +655,14 @@ function clampViewXY() {
   viewY = Math.max(0, Math.min(viewY, maxScrollY));
 }
 
+// Limita il fattore di scala tra 0.1 e 5.2
+// Clamps the scale factor between 0.1 and 5.2
 function clampScale(value) {
   return Math.min(5.2, Math.max(0.1, value));
 }
 
+// Gestisce lo zoom della timeline rispetto a un punto focale
+// Handles timeline zooming relative to a focal point
 function zoomTimeline(factor, focusX, focusY) {
   const newScale = clampScale(scale * factor);
   if (newScale === scale) return;
@@ -672,6 +682,8 @@ function zoomTimeline(factor, focusX, focusY) {
   queueRender('zoom');
 }
 
+// Sposta la vista (pan) in base ai delta x e y
+// Pans the view based on delta x and y
 function panTimeline(dx, dy) {
   viewX += dx;
   viewY += dy;
@@ -679,6 +691,8 @@ function panTimeline(dx, dy) {
   queueRender('pan');
 }
 
+// Resetta la scala e la posizione della vista
+// Resets scale and view position
 function resetView() {
   scale = 1;
   viewX = 0;
@@ -686,6 +700,8 @@ function resetView() {
   queueRender('reset');
 }
 
+// Adatta la vista per far entrare tutto il contenuto
+// Fits the view to show all content
 function fitView() {
   scale = Math.min(1, Math.min(wrap.clientWidth / width, wrap.clientHeight / height));
   viewX = 0;
@@ -693,6 +709,8 @@ function fitView() {
   queueRender('fit');
 }
 
+// Setup dei pulsanti di controllo
+// Control buttons setup
 const zoomInButton = document.getElementById('zoom-in');
 const zoomOutButton = document.getElementById('zoom-out');
 const resetViewButton = document.getElementById('reset-view');
@@ -703,6 +721,8 @@ zoomOutButton?.addEventListener('click', () => zoomTimeline(0.85));
 resetViewButton?.addEventListener('click', () => resetView());
 fitViewButton?.addEventListener('click', () => fitView());
 
+// Gestione dei comandi da tastiera
+// Keyboard shortcuts handling
 window.addEventListener('keydown', event => {
   if (event.target instanceof HTMLElement && ['INPUT', 'TEXTAREA', 'BUTTON'].includes(event.target.tagName)) return;
   switch (event.key) {
@@ -717,7 +737,8 @@ window.addEventListener('keydown', event => {
   }
 });
 
-
+// Inizia l'azione di trascinamento (drag)
+// Starts dragging action
 function startDrag(event) {
   if (event.target.closest && event.target.closest('g[data-id]')) return;
   
@@ -731,6 +752,8 @@ function startDrag(event) {
   event.preventDefault();
 }
 
+// Gestisce il movimento durante il trascinamento
+// Handles movement during dragging
 function moveDrag(event) {
   if (!isDragging) return;
   const dx = event.clientX - lastX;
@@ -745,6 +768,8 @@ function moveDrag(event) {
   queueRender('pointer');
 }
 
+// Termina l'azione di trascinamento
+// Ends dragging action
 function stopDrag(event) {
   if (!isDragging) return;
   isDragging = false;
@@ -753,14 +778,16 @@ function stopDrag(event) {
   tracker.style.cursor = 'grab';
 }
 
-
+// Setup eventi puntatore
+// Pointer events setup
 svg.style.cursor = 'grab';
 svg.addEventListener('pointerdown', startDrag);
 svg.addEventListener('pointermove', moveDrag);
 svg.addEventListener('pointerup', stopDrag);
 svg.addEventListener('pointercancel', stopDrag);
 
-
+// Gestione dello scroll manuale del contenitore
+// Handles manual scroll of the container
 wrap.addEventListener('scroll', () => {
 
   if (isDragging || ignoreScrollEvents) return;
@@ -772,18 +799,21 @@ wrap.addEventListener('scroll', () => {
   queueRender('scroll');
 });
 
-
+// Gestione dello zoom tramite rotella del mouse
+// Handles zooming via mouse wheel
 wrap.addEventListener('wheel', event => {
   event.preventDefault();
   const factor = event.deltaY > 0 ? 0.92 : 1.08;
   zoomTimeline(factor, event.clientX, event.clientY);
 }, { passive: false });
 
-
+// Gestione del ridimensionamento finestra
+// Handles window resize
 window.addEventListener('resize', () => {
   clampViewXY();
   queueRender('resize');
 });
 
-
+// Rendering iniziale
+// Initial rendering
 queueRender('init');
