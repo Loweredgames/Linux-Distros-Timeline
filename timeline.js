@@ -376,16 +376,28 @@ distros.forEach(distro => {
     }
 });
 
+// setting distros entries
 const yearMax = dynamicYearMax;
 const years = Array.from({ length: yearMax - yearMin + 2 }, (_, i) => yearMin + i);
-const nodeWidth = 230;
-const nodeHeight = 56;
-const yearStep = 265;
-const marginLeft = 120;
-const marginRight = 180;
-const marginTop = 120;
-const marginBottom = 90;
-const rowGap = 125;
+
+// larghezza e altezza dei nodi della timeline
+const nodeWidth = 230; // larghezza di ogni rettangolo nodo
+const nodeHeight = 56; // altezza di ogni rettangolo nodo
+
+// distanza orizzontale tra le linee degli anni
+const yearStep = 265; // più alto = anni più distanziati, più basso = più compressi
+
+// margini attorno all'SVG
+const marginLeft = 120; // spazio a sinistra prima del primo nodo/linea anno
+const marginRight = 180; // spazio a destra dopo l'ultimo nodo
+const marginTop = 120; // spazio sopra la timeline
+const marginBottom = 90; // spazio sotto la timeline
+
+// spaziatura verticale
+const rowGap = 500; // distanza verticale tra famiglie (gruppi principali)
+const slotGap = 50; // distanza verticale tra nodi sovrapposti all'interno della stessa famiglia
+
+// velocità di pan con relativa animazione
 const panSpeed = 1.8;
 
 // mappa le date precise sulla coordinata orizzontale dell'SVG
@@ -442,6 +454,7 @@ distros.forEach(d => {
 });
 
 const familyMap = new Map();
+const rowSlotCounts = new Map();
 
 // risolve la famiglia di appartenenza risalendo ai padri successivi
 // resolve the root family by walking parent links recursively
@@ -483,9 +496,8 @@ distros.forEach(node => {
 // calcola il layer verticale per evitare sovrapposizioni
 // compute vertical layers to avoid overlapping nodes on the same row
 const slotIndex = new Map();
-let maxSlots = 1;
 const overlapPadding = 18;
-rowNodes.forEach(nodes => {
+rowNodes.forEach((nodes, row) => {
   const layers = [];
       // usa solo la data precisa fornita in node.date
       // use only the precise date given in node.date
@@ -529,16 +541,26 @@ rowNodes.forEach(nodes => {
       if (!layers[layer]) layers[layer] = [];
       layers[layer].push({ x, endX, id: node.id });
       slotIndex.set(node.id, layer);
-      maxSlots = Math.max(maxSlots, layer + 1);
+      rowSlotCounts.set(row, Math.max(rowSlotCounts.get(row) || 0, layer + 1));
     });
 });
 
-const slotGap = 70;
-const familyRowHeight = rowGap + (maxSlots - 1) * slotGap;
-// familyRowHeight determina la distanza tra le righe di famiglie diverse
-// familyRowHeight determines the vertical spacing between different family rows
+const familyRowHeights = families.map((family) => {
+  const row = columns.get(family);
+  const slots = rowSlotCounts.get(row) || 1;
+  return rowGap + (slots - 1) * slotGap;
+});
+
+const rowYOffsets = new Map();
+let currentY = marginTop;
+families.forEach((family, index) => {
+  const row = columns.get(family);
+  rowYOffsets.set(row, currentY);
+  currentY += familyRowHeights[index];
+});
+
 const width = marginLeft + (years.length - 1) * yearStep + nodeWidth + marginRight;
-const height = marginTop + families.length * familyRowHeight + nodeHeight + marginBottom;
+const height = currentY + nodeHeight + marginBottom;
 
 svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
 svg.setAttribute('width', width);
@@ -622,7 +644,7 @@ distros.forEach(node => {
   const daysFromStart = Math.round((nodeDate - startDate) / msPerDay);
   const x = marginLeft + daysFromStart * dayPx;
   const extraRow = slotIndex.get(node.id) || 0;
-  const y = marginTop + row * familyRowHeight + extraRow * slotGap;
+  const y = rowYOffsets.get(row) + extraRow * slotGap;
 
   // salva la posizione del nodo per disegnare le linee dopo
   nodePositions.set(node.id, { x, y });
