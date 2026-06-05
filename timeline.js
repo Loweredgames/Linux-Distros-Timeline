@@ -188,6 +188,15 @@ const distros = [
       url: 'https://en.wikipedia.org/wiki/Linux_Mint'
   },
   {
+      id: 'pop_os',
+      name: 'Pop!_OS',
+      date: '27/10/2017',
+      last_update: '11/12/2025',
+      parent: 'ubuntu',
+      color: '#50bcc9',
+      url: 'https://en.wikipedia.org/wiki/Pop!_OS'
+  },
+  {
       id: 'linux-mint-de',
       name: 'Linux Mint Debian Edition',
       date: '01/01/2010',
