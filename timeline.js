@@ -308,6 +308,15 @@ const distros = [
       url: 'https://en.wikipedia.org/wiki/Arch_Linux_ARM'
   },
   {
+      id: 'endeavouros',
+      name: 'EndeavourOS',
+      date: '15/07/2019',
+      last_update: '12/03/2026',
+      parent: 'arch-linux',
+      color: '#7f3ebe',
+      url: 'https://en.wikipedia.org/wiki/EndeavourOS'
+  },
+  {
       id: 'android',
       name: 'Android',
       logo: 'logos/android.png',
