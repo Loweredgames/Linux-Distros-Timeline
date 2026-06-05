@@ -1,9 +1,7 @@
-// Dataset delle distribuzioni Linux per la timeline.
-// Dataset of Linux distributions for the timeline.
-// Ogni oggetto rappresenta una distro con attributi di visualizzazione, date, colore e link.
-// Each object represents a distro with display attributes, dates, color, and link.
+// Dataset delle distribuzioni Linux per la timeline. / Dataset of Linux distributions for the timeline.
+// Ogni oggetto rappresenta una distro con attributi di visualizzazione, date, colore e link. / Each object represents a distro with display attributes, dates, color, and link.
 
-// Rolling release date
+// Rolling release date / Data di rilascio rolling
 const today = new Date();
 const RollingRelease = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`; // Mette la data di oggi / set today's date
 
@@ -410,8 +408,8 @@ const yearMin = 1991;
 // Calcolo finale della data nel grafico in maniera dinamica / dynamically calculate the final date in the chart
 let dynamicYearMax = new Date().getFullYear();
 distros.forEach(distro => {
-    const releaseDate = parseDistroDate(distro.date);
-    const updateDate = parseDistroDate(distro.last_update);
+    const releaseDate = distro.releaseDate;
+    const updateDate = distro.updateDate;
     
     if (isValidDate(releaseDate)) {
         dynamicYearMax = Math.max(dynamicYearMax, releaseDate.getFullYear());
@@ -421,7 +419,7 @@ distros.forEach(distro => {
     }
 });
 
-// setting distros entries
+// Imposta le voci delle distro / Sets distro entries
 const yearMax = dynamicYearMax;
 const years = Array.from({ length: yearMax - yearMin + 2 }, (_, i) => yearMin + i);
 
@@ -460,25 +458,22 @@ function createGridLine(x, y1, y2, className) {
   return line;
 }
 
-// larghezza e altezza dei nodi della timeline
-const nodeWidth = 230; // larghezza di ogni rettangolo nodo
-const nodeHeight = 56; // altezza di ogni rettangolo nodo
+// larghezza e altezza dei nodi della timeline / width and height of timeline nodes
+const nodeWidth = 230; // larghezza di ogni rettangolo nodo / node rectangle width
+const nodeHeight = 56; // altezza di ogni rettangolo nodo / node rectangle height
 
-// distanza orizzontale tra le linee degli anni
-const yearStep = 2060; // più alto = anni più distanziati, più basso = più compressi
+// distanza orizzontale tra le linee degli anni / horizontal spacing between year grid lines
+const yearStep = 2060; // più alto = anni più distanziati, più basso = più compressi / higher = more spread out years, lower = more compact
 
-// margini attorno all'SVG
-const marginLeft = 120; // spazio a sinistra prima del primo nodo/linea anno
-const marginRight = 180; // spazio a destra dopo l'ultimo nodo
-const marginTop = 120; // spazio sopra la timeline
-const marginBottom = 90; // spazio sotto la timeline
+// margini attorno all'SVG / margins around the SVG
+const marginLeft = 120; // spazio a sinistra prima del primo nodo/linea anno / left space before the first node/year line
+const marginRight = 180; // spazio a destra dopo l'ultimo nodo / right space after the last node
+const marginTop = 120; // spazio sopra la timeline / top space above the timeline
+const marginBottom = 90; // spazio sotto la timeline / bottom space below the timeline
 
-// spaziatura verticale
-const rowGap = 500; // distanza verticale tra famiglie (gruppi principali)
-const slotGap = 50; // distanza verticale tra nodi sovrapposti all'interno della stessa famiglia
-
-// velocità di pan con relativa animazione
-const panSpeed = 1.8;
+// spaziatura verticale / vertical spacing
+const rowGap = 500; // distanza verticale tra famiglie (gruppi principali) / vertical distance between families (main groups)
+const slotGap = 50; // distanza verticale tra nodi sovrapposti all'interno della stessa famiglia / vertical distance between overlapping nodes within the same family
 
 // mappa le date precise sulla coordinata orizzontale dell'SVG
 // map precise dates to the horizontal SVG coordinate
@@ -524,7 +519,12 @@ function isValidDate(date) {
   return date instanceof Date && !Number.isNaN(date.getTime());
 }
 
-// mappa dagli id ai dati delle distro per risolvere padri e relazioni
+distros.forEach(distro => {
+  distro.releaseDate = parseDistroDate(distro.date);
+  distro.updateDate = parseDistroDate(distro.last_update);
+});
+
+// mappa dagli id ai dati delle distro per risolvere padri e relazioni / maps distro ids to data to resolve parent relationships
 const idMap = new Map(distros.map(d => [d.id, d]));
 const renamePredictorMap = new Map();
 distros.forEach(d => {
@@ -607,7 +607,7 @@ rowNodes.forEach((nodes, row) => {
       if (isRename && slotIndex.has(renameParentId)) {
         layer = slotIndex.get(renameParentId);
       } else {
-        // ALTRIMENTI (Fork o Radice): Cerca il primo slot libero disponibile / // ELSE (Fork or Root): Search for the first available free slot
+        // ALTRIMENTI (Fork o Radice): Cerca il primo slot libero disponibile / ELSE (Fork or Root): Search for the first available free slot
         layer = !node.parent ? 0 : 2;
         while (true) {
           const collision = (layers[layer] || []).some(prev => {
@@ -760,8 +760,7 @@ const nodePositions = new Map();
 // nodePositions stores each node's coordinates for drawing parent-child links
 distros.forEach(node => {
   const row = columns.get(resolveFamily(node));
-  // usa solo la data precisa fornita in node.date
-  const nodeDate = parseDistroDate(node.date);
+  const nodeDate = node.releaseDate;
   const daysFromStart = Math.round((nodeDate - startDate) / msPerDay);
   const x = marginLeft + daysFromStart * dayPx;
   const extraRow = slotIndex.get(node.id) || 0;
@@ -770,8 +769,7 @@ distros.forEach(node => {
   // salva la posizione del nodo per disegnare le linee dopo
   nodePositions.set(node.id, { x, y });
 
-  const rawUpdateDate = parseDistroDate(node.last_update);
-  const updateDate = isValidDate(rawUpdateDate) ? rawUpdateDate : null;
+  const updateDate = isValidDate(node.updateDate) ? node.updateDate : null;
   // se last_update è valido e successivo alla data di rilascio, disegna il range di aggiornamento
   // if last_update is valid and later than the release date, draw the update range
   if (updateDate && updateDate > nodeDate) {
@@ -854,16 +852,21 @@ distros.forEach(node => {
     const lastUpdate = node.last_update ? `<br><span>Last update: ${formatDateISO(node.last_update)}</span>` : '';
     tooltip.innerHTML = `<strong>${node.name}</strong><span>Date: ${formatDateISO(dateStr)}</span>${lastUpdate}<br><span>Fork: ${parent}</span>`;
     tooltip.classList.add('visible');
+
+    const wrapRect = wrap.getBoundingClientRect();
+    const groupRect = group.getBoundingClientRect();
+    tooltip.style.left = `${groupRect.left + groupRect.width / 2 - wrapRect.left}px`;
+    tooltip.style.top = `${groupRect.top - wrapRect.top}px`;
   });
-  // previene la propagazione per evitare di attivare il pannello di drag se il nodo viene cliccato
-  // prevent propagation to avoid starting panning when clicking on a node
+  // previene la propagazione per evitare di attivare il pannello di drag se il nodo viene cliccato. / prevent propagation to avoid starting panning when clicking on a node.
   group.addEventListener('pointerdown', event => {
     event.stopPropagation();
   });
-  group.addEventListener('pointermove', event => {
+  group.addEventListener('pointermove', () => {
     const wrapRect = wrap.getBoundingClientRect();
-    tooltip.style.left = `${event.clientX - wrapRect.left}px`;
-    tooltip.style.top = `${event.clientY - wrapRect.top}px`;
+    const groupRect = group.getBoundingClientRect();
+    tooltip.style.left = `${groupRect.left + groupRect.width / 2 - wrapRect.left}px`;
+    tooltip.style.top = `${groupRect.top - wrapRect.top}px`;
   });
 
   group.addEventListener('pointerleave', () => {
@@ -926,7 +929,7 @@ let scale = 1;
 let rafPending = false;
 let ignoreScrollEvents = false;
 let scrollTimeout = null;
-// pinch-to-zoom state for touch
+// pinch-to-zoom state for touch / stato pinch-to-zoom per i touch
 let pinchActive = false;
 let pinchStartDist = 0;
 let pinchStartScale = 1;
@@ -939,23 +942,19 @@ function queueRender(source) {
   requestAnimationFrame(() => {
     rafPending = false;
     
-    
-    // Set SVG size to the content size scaled so scroll extents match the zoom
-    svg.style.width = `${Math.ceil(width * scale)}px`;
-    svg.style.height = `${Math.ceil(height * scale)}px`;
-    svg.style.maxWidth = 'none';
-    svg.style.minWidth = `${Math.ceil(width * scale)}px`;
-    svg.style.transform = '';
-    
-    
-    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-    updateGridVisibility();
+    const shouldResize = source !== 'pan' && source !== 'scroll';
+    if (shouldResize) {
+      // Aggiorna le dimensioni SVG solo quando lo zoom o il contenuto cambiano / Update SVG size only when zoom or content-relative changes occur
+      svg.style.width = `${Math.ceil(width * scale)}px`;
+      svg.style.height = `${Math.ceil(height * scale)}px`;
+      svg.style.maxWidth = 'none';
+      svg.style.minWidth = `${Math.ceil(width * scale)}px`;
+      svg.style.transform = '';
+      updateGridVisibility();
+    }
     
     // Aggiorna la posizione dello scroll se non proviene da un evento scroll / Updates scroll position if the source is not a scroll event
     if (wrap && source !== 'scroll') {
-      void wrap.scrollHeight; 
-      void wrap.scrollWidth;
-
       ignoreScrollEvents = true;
       clearTimeout(scrollTimeout);
       
@@ -1043,15 +1042,17 @@ function fitView() {
 }
 
 // Setup dei pulsanti di controllo / Control buttons setup
-const zoomInButton = document.getElementById('zoom-in');
-const zoomOutButton = document.getElementById('zoom-out');
 const resetViewButton = document.getElementById('reset-view');
 const fitViewButton = document.getElementById('fit-view');
 
-zoomInButton?.addEventListener('click', () => zoomTimeline(1.15));
-zoomOutButton?.addEventListener('click', () => zoomTimeline(0.85));
 resetViewButton?.addEventListener('click', () => resetView());
 fitViewButton?.addEventListener('click', () => fitView());
+
+// Valori di zoom regolabili in un punto solo / User-tweakable zoom values in one place
+const zoomStepIn = 1.15;   // fattore usato per ingrandire con + / factor used when zooming in with +
+const zoomStepOut = 3;  // fattore usato per ridurre con - / factor used when zooming out with -
+const wheelZoomIn = 1.08;  // fattore usato per la rotella in avanti / factor used when scrolling wheel forward
+const wheelZoomOut = 0.92; // fattore usato per la rotella indietro / factor used when scrolling wheel backward
 
 // Gestione dei comandi da tastiera / Keyboard shortcuts handling
 window.addEventListener('keydown', event => {
@@ -1062,8 +1063,8 @@ window.addEventListener('keydown', event => {
     case 'ArrowUp':    event.preventDefault(); panTimeline(0, -120); break;
     case 'ArrowDown':  event.preventDefault(); panTimeline(0, 120); break;
     case '+':
-    case '=':          event.preventDefault(); zoomTimeline(1.15); break;
-    case '-':          event.preventDefault(); zoomTimeline(0.85); break;
+    case '=':          event.preventDefault(); zoomTimeline(zoomStepIn); break;
+    case '-':          event.preventDefault(); zoomTimeline(zoomStepOut); break;
     case '0':          event.preventDefault(); resetView(); break;
   }
 });
@@ -1090,7 +1091,7 @@ function moveDrag(event) {
   lastX = event.clientX;
   lastY = event.clientY;
 
-  // Slightly adjust pan sensitivity for touch input to feel more natural on mobile
+  // Regola leggermente la sensibilità del pan per i touch in modo da risultare più naturale sui dispositivi mobili / Slightly adjust pan sensitivity for touch input to feel more natural on mobile
   const isTouch = event.pointerType === 'touch' || event.pointerType === 'pen';
   const touchMultiplier = isTouch ? 1.2 : 1;
   viewX -= dx * touchMultiplier;
@@ -1131,18 +1132,18 @@ wrap.addEventListener('scroll', () => {
 // Gestione dello zoom tramite rotella del mouse / Handles zooming via mouse wheel
 wrap.addEventListener('wheel', event => {
   event.preventDefault();
-  const factor = event.deltaY > 0 ? 0.92 : 1.08;
+  const factor = event.deltaY > 0 ? wheelZoomOut : wheelZoomIn;
   zoomTimeline(factor, event.clientX, event.clientY);
 }, { passive: false });
 
-// Helper: distanza tra due touch
+// Helper: distanza tra due touch / Helper: distance between two touches
 function touchDistance(t1, t2) {
   const dx = t2.clientX - t1.clientX;
   const dy = t2.clientY - t1.clientY;
   return Math.hypot(dx, dy);
 }
 
-// Helper: midpoint between two touches
+// Helper: midpoint between two touches / Helper: punto medio tra due touch
 function touchMidpoint(t1, t2) {
   return {
     x: (t1.clientX + t2.clientX) / 2,
@@ -1150,7 +1151,7 @@ function touchMidpoint(t1, t2) {
   };
 }
 
-// Pinch-to-zoom handling for touch devices
+// Pinch-to-zoom handling for touch devices / Gestione pinch-to-zoom per dispositivi touch
 wrap.addEventListener('touchstart', (e) => {
   if (e.touches && e.touches.length === 2) {
     pinchActive = true;
@@ -1188,9 +1189,9 @@ window.addEventListener('resize', () => {
 // Rendering iniziale / Initial rendering
 queueRender('init');
 
-// After the page loads, do a gentle fit so mobile users see the timeline content
+// Dopo il caricamento della pagina, effettua un fit delicato in modo che gli utenti mobile vedano il contenuto della timeline / After the page loads, do a gentle fit so mobile users see the timeline content
 window.addEventListener('load', () => {
-  // small delay to allow layout to stabilise
+  // piccolo ritardo per permettere al layout di stabilizzarsi / small delay to allow layout to stabilise
   setTimeout(() => {
     try { fitView(); } catch (e) { /* ignore */ }
   }, 150);
