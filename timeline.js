@@ -326,6 +326,15 @@ const distros = [
       url: 'https://en.wikipedia.org/wiki/EndeavourOS'
   },
   {
+      id: 'manjaro',
+      name: 'Manjaro',
+      date: '10/07/2011',
+      last_update: '05/01/2026',
+      parent: 'arch-linux',
+      color: '#35bfa4',
+      url: 'https://en.wikipedia.org/wiki/Manjaro'
+  },
+  {
       id: 'steamos',
       name: 'SteamOS',
       date: '02/03/2022',
