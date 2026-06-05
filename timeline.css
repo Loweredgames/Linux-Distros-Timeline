@@ -69,11 +69,19 @@ header p {
   overscroll-behavior: contain;
 }
 
+/* momentum scrolling on iOS */
+#timeline-wrap {
+  -webkit-overflow-scrolling: touch;
+}
+
 #timeline-svg {
   display: block;
-  width: max-content;
-  height: 100%;
+  /* make SVG responsive: fill container width but allow horizontal scrolling when content is wider */
+  width: 100%;
+  height: auto;
   min-height: 100%;
+  touch-action: none;
+  transform-origin: 0 0;
 }
 
 .tooltip {
@@ -154,10 +162,61 @@ header p {
 
 #timeline-svg {
   display: block;
-  width: max-content;
-  height: 100%;
+  width: 100%;
+  height: auto;
   min-height: 100%;
   touch-action: none;
+  transform-origin: 0 0;
+}
+
+/* Responsive tweaks for smaller screens */
+@media (max-width: 768px) {
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .controls {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .controls button {
+    padding: 10px 12px;
+    min-width: 44px;
+    min-height: 44px;
+    width: 44px;
+    height: 44px;
+    font-size: 1rem;
+  }
+
+  .hint { display: none; }
+}
+
+@media (max-width: 420px) {
+  /* Make controls overlay to avoid header wrapping for very small devices */
+  .controls {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: transparent;
+    padding: 4px;
+    gap: 6px;
+  }
+}
+
+/* Hide keyboard hints on touch-first devices */
+@media (pointer: coarse) {
+  .hint { display: none; }
+}
+
+/* On touch-first devices we avoid hover tooltips overlaying content */
+@media (pointer: coarse) {
+  .tooltip { display: none; }
 }
 
 .year-label {

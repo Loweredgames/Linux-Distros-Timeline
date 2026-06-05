@@ -881,6 +881,10 @@ let scale = 1;
 let rafPending = false;
 let ignoreScrollEvents = false;
 let scrollTimeout = null;
+// pinch-to-zoom state for touch
+let pinchActive = false;
+let pinchStartDist = 0;
+let pinchStartScale = 1;
 
 // Gestisce il rendering tramite requestAnimationFrame per ottimizzare le prestazioni / Handles rendering via requestAnimationFrame to optimize performance
 function queueRender(source) {
@@ -891,8 +895,12 @@ function queueRender(source) {
     rafPending = false;
     
     
-    svg.style.width = `${width * scale}px`;
-    svg.style.height = `${height * scale}px`;
+    // Set SVG size to the content size scaled so scroll extents match the zoom
+    svg.style.width = `${Math.ceil(width * scale)}px`;
+    svg.style.height = `${Math.ceil(height * scale)}px`;
+    svg.style.maxWidth = 'none';
+    svg.style.minWidth = `${Math.ceil(width * scale)}px`;
+    svg.style.transform = '';
     
     
     svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
@@ -1037,8 +1045,11 @@ function moveDrag(event) {
   lastX = event.clientX;
   lastY = event.clientY;
 
-  viewX -= dx;
-  viewY -= dy;
+  // Slightly adjust pan sensitivity for touch input to feel more natural on mobile
+  const isTouch = event.pointerType === 'touch' || event.pointerType === 'pen';
+  const touchMultiplier = isTouch ? 1.2 : 1;
+  viewX -= dx * touchMultiplier;
+  viewY -= dy * touchMultiplier;
   
   clampViewXY();
   queueRender('pointer');
@@ -1079,6 +1090,50 @@ wrap.addEventListener('wheel', event => {
   zoomTimeline(factor, event.clientX, event.clientY);
 }, { passive: false });
 
+// Helper: distanza tra due touch
+function touchDistance(t1, t2) {
+  const dx = t2.clientX - t1.clientX;
+  const dy = t2.clientY - t1.clientY;
+  return Math.hypot(dx, dy);
+}
+
+// Helper: midpoint between two touches
+function touchMidpoint(t1, t2) {
+  return {
+    x: (t1.clientX + t2.clientX) / 2,
+    y: (t1.clientY + t2.clientY) / 2
+  };
+}
+
+// Pinch-to-zoom handling for touch devices
+wrap.addEventListener('touchstart', (e) => {
+  if (e.touches && e.touches.length === 2) {
+    pinchActive = true;
+    pinchStartDist = touchDistance(e.touches[0], e.touches[1]);
+    pinchStartScale = scale;
+    e.preventDefault();
+  }
+}, { passive: false });
+
+wrap.addEventListener('touchmove', (e) => {
+  if (pinchActive && e.touches && e.touches.length === 2) {
+    const newDist = touchDistance(e.touches[0], e.touches[1]);
+    if (pinchStartDist <= 0) return;
+    const desiredScale = clampScale(pinchStartScale * (newDist / pinchStartDist));
+    const factor = desiredScale / scale;
+    const mid = touchMidpoint(e.touches[0], e.touches[1]);
+    zoomTimeline(factor, mid.x, mid.y);
+    e.preventDefault();
+  }
+}, { passive: false });
+
+wrap.addEventListener('touchend', (e) => {
+  if (!e.touches || e.touches.length < 2) {
+    pinchActive = false;
+    pinchStartDist = 0;
+  }
+});
+
 // Gestione del ridimensionamento finestra / Handles window resize
 window.addEventListener('resize', () => {
   clampViewXY();
@@ -1087,3 +1142,11 @@ window.addEventListener('resize', () => {
 
 // Rendering iniziale / Initial rendering
 queueRender('init');
+
+// After the page loads, do a gentle fit so mobile users see the timeline content
+window.addEventListener('load', () => {
+  // small delay to allow layout to stabilise
+  setTimeout(() => {
+    try { fitView(); } catch (e) { /* ignore */ }
+  }, 150);
+});
