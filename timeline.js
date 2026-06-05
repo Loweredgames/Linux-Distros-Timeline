@@ -380,12 +380,47 @@ distros.forEach(distro => {
 const yearMax = dynamicYearMax;
 const years = Array.from({ length: yearMax - yearMin + 2 }, (_, i) => yearMin + i);
 
+// Restituisce gli inizi di ogni mese compreso nel range / Returns the start date of each month within the range
+function getMonthStarts(start, end) {
+  const months = [];
+  const date = new Date(start.getFullYear(), start.getMonth(), 1);
+  if (date < start) date.setMonth(date.getMonth() + 1);
+  while (date <= end) {
+    months.push(new Date(date));
+    date.setMonth(date.getMonth() + 1);
+  }
+  return months;
+}
+
+// Restituisce tutti i giorni compresi nel range / Returns every day within the range
+function getDayStarts(start, end) {
+  const days = [];
+  const date = new Date(start);
+  date.setHours(0, 0, 0, 0);
+  while (date <= end) {
+    days.push(new Date(date));
+    date.setDate(date.getDate() + 1);
+  }
+  return days;
+}
+
+// Crea una singola linea verticale della griglia / Create a single vertical grid line
+function createGridLine(x, y1, y2, className) {
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line.setAttribute('x1', x);
+  line.setAttribute('x2', x);
+  line.setAttribute('y1', y1);
+  line.setAttribute('y2', y2);
+  line.setAttribute('class', className);
+  return line;
+}
+
 // larghezza e altezza dei nodi della timeline
 const nodeWidth = 230; // larghezza di ogni rettangolo nodo
 const nodeHeight = 56; // altezza di ogni rettangolo nodo
 
 // distanza orizzontale tra le linee degli anni
-const yearStep = 265; // più alto = anni più distanziati, più basso = più compressi
+const yearStep = 2060; // più alto = anni più distanziati, più basso = più compressi
 
 // margini attorno all'SVG
 const marginLeft = 120; // spazio a sinistra prima del primo nodo/linea anno
@@ -589,19 +624,15 @@ svg.appendChild(background);
 // draw annual grid lines and year labels in the background
 const gridGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 svg.appendChild(gridGroup);
+let monthGridPath = null;
+let dayGridPath = null;
 
 years.forEach(year => {
   const yearDate = new Date(year, 0, 1);
   const x = marginLeft + Math.round((yearDate - startDate) / msPerDay) * dayPx + nodeWidth * 0.5;
 
   // Disegna la linea nell'esatta posizione di inizio anno (x) / Draw the line at the exact position of the beginning of the year (x)
-  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  line.setAttribute('x1', x);
-  line.setAttribute('x2', x);
-  line.setAttribute('y1', marginTop - 20);
-  line.setAttribute('y2', height - marginBottom + 20);
-  line.setAttribute('class', 'grid-line');
-  gridGroup.appendChild(line);
+  gridGroup.appendChild(createGridLine(x, marginTop - 20, height - marginBottom + 20, 'grid-line'));
 
   // Calcola la posizione dell'anno successivo per trovare il centro / Calculate the position of the next year to find the center
   const nextYearDate = new Date(year + 1, 0, 1);
@@ -624,6 +655,51 @@ years.forEach(year => {
   bottomLabel.textContent = year;
   gridGroup.appendChild(bottomLabel);
 });
+
+// Disegna le linee mensili e giornaliere usando path aggregati per ridurre il DOM / Draw month/day lines as aggregated paths to keep DOM count low
+const monthStarts = getMonthStarts(startDate, endDate);
+const yearXPositions = new Set(years.map(year => {
+  const yearDate = new Date(year, 0, 1);
+  return marginLeft + Math.round((yearDate - startDate) / msPerDay) * dayPx + nodeWidth * 0.5;
+}));
+const monthPathX = new Set();
+const monthPathParts = [];
+const monthTop = marginTop - 14;
+const monthBottom = height - marginBottom + 14;
+monthStarts.forEach(monthDate => {
+  if (monthDate.getMonth() === 0) return; // Skip January because year line already exists
+  const x = marginLeft + Math.round((monthDate - startDate) / msPerDay) * dayPx + nodeWidth * 0.5;
+  if (yearXPositions.has(x) || monthPathX.has(x)) return; // Evita sovrapposizioni con linee anno e duplicati X / Avoid overlaps with year lines and duplicate X values
+  monthPathX.add(x);
+  monthPathParts.push(`M ${x} ${monthTop} L ${x} ${monthBottom}`);
+});
+if (monthPathParts.length) {
+  const monthPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  monthPath.setAttribute('d', monthPathParts.join(' '));
+  monthPath.setAttribute('class', 'month-grid-line');
+  gridGroup.appendChild(monthPath);
+  monthGridPath = monthPath;
+}
+
+const dayStarts = getDayStarts(startDate, endDate);
+const dayPathX = new Set();
+const dayPathParts = [];
+const dayTop = marginTop - 8;
+const dayBottom = height - marginBottom + 8;
+dayStarts.forEach(dayDate => {
+  if (dayDate.getDate() === 1) return; // Skip first-of-month lines so month/year boundaries remain distinct
+  const x = marginLeft + Math.round((dayDate - startDate) / msPerDay) * dayPx + nodeWidth * 0.5;
+  if (yearXPositions.has(x) || monthPathX.has(x) || dayPathX.has(x)) return; // Evita sovrapposizioni con anni, mesi e duplicati X / Avoid overlaps with years, months, and duplicate X values
+  dayPathX.add(x);
+  dayPathParts.push(`M ${x} ${dayTop} L ${x} ${dayBottom}`);
+});
+if (dayPathParts.length) {
+  const dayPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  dayPath.setAttribute('d', dayPathParts.join(' '));
+  dayPath.setAttribute('class', 'day-grid-line');
+  gridGroup.appendChild(dayPath);
+  dayGridPath = dayPath;
+}
 
 // gruppi SVG per nodi e collegamenti
 // SVG groups for update ranges, nodes, and relationship links
@@ -689,7 +765,7 @@ distros.forEach(node => {
   rect.setAttribute('width', nodeWidth);
   rect.setAttribute('height', nodeHeight);
   rect.setAttribute('fill', node.color);
-  rect.setAttribute('opacity', '0.96');
+  rect.setAttribute('opacity', '1');
   rect.setAttribute('stroke', 'rgba(255,255,255,0.12)');
   rect.setAttribute('stroke-width', '1');
   group.appendChild(rect);
@@ -828,6 +904,7 @@ function queueRender(source) {
     
     
     svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    updateGridVisibility();
     
     // Aggiorna la posizione dello scroll se non proviene da un evento scroll / Updates scroll position if the source is not a scroll event
     if (wrap && source !== 'scroll') {
@@ -861,6 +938,19 @@ function clampViewXY() {
 // Limita il fattore di scala tra 0.1 e 5.2 / Clamps the scale factor between 0.1 and 5.2
 function clampScale(value) {
   return Math.min(5.2, Math.max(0.1, value));
+}
+
+// Regola la visibilità delle linee di griglia in base allo zoom
+// Adjust grid line visibility based on zoom level
+function updateGridVisibility() {
+  if (monthGridPath) {
+    const showMonths = scale >= 0.18;
+    monthGridPath.setAttribute('display', showMonths ? 'inline' : 'none');
+  }
+  if (dayGridPath) {
+    const showDays = scale >= 0.65;
+    dayGridPath.setAttribute('display', showDays ? 'inline' : 'none');
+  }
 }
 
 // Gestisce lo zoom della timeline rispetto a un punto focale / Handles timeline zooming relative to a focal point
