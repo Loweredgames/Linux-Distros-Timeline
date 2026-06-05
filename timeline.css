@@ -96,7 +96,7 @@ header p {
   font-size: 0.92rem;
   pointer-events: none;
   opacity: 0;
-  transform: translate(-50%, -110%);
+  transform: translate(-50%, 0);
   transition: opacity 120ms ease, transform 120ms ease;
   white-space: nowrap;
   z-index: 3;
@@ -104,7 +104,7 @@ header p {
 
 .tooltip.visible {
   opacity: 1;
-  transform: translate(-50%, -120%);
+  transform: translate(-50%, -50%);
 }
 
 .tooltip strong {
@@ -158,15 +158,6 @@ header p {
 
 #timeline-wrap::-webkit-scrollbar {
   display: none; /* WebKit browsers */
-}
-
-#timeline-svg {
-  display: block;
-  width: 100%;
-  height: auto;
-  min-height: 100%;
-  touch-action: none;
-  transform-origin: 0 0;
 }
 
 /* Responsive tweaks for smaller screens */
