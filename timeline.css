@@ -167,6 +167,16 @@ header p {
 }
 
 .grid-line {
+  stroke: rgba(148,163,184,0.36);
+  stroke-width: 2;
+}
+
+.month-grid-line {
+  stroke: rgba(148,163,184,0.24);
+  stroke-width: 1.5;
+}
+
+.day-grid-line {
   stroke: rgba(148,163,184,0.12);
   stroke-width: 1;
 }
