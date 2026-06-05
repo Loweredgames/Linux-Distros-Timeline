@@ -197,6 +197,15 @@ const distros = [
       url: 'https://en.wikipedia.org/wiki/Linux_Mint'
   },
   {
+      id: 'steamos-debian',
+      name: 'SteamOS 1.0 - 2.0',
+      date: '13/12/2013',
+      last_update: '18/07/2019',
+      parent: 'debian',
+      color: '#271b1b',
+      url: 'https://en.wikipedia.org/wiki/SteamOS'
+  },
+  {
       id: 'kde-neon',
       name: 'KDE Neon',
       date: '08/06/2016',
@@ -315,6 +324,15 @@ const distros = [
       parent: 'arch-linux',
       color: '#7f3ebe',
       url: 'https://en.wikipedia.org/wiki/EndeavourOS'
+  },
+  {
+      id: 'steamos',
+      name: 'SteamOS',
+      date: '02/03/2022',
+      last_update: '20/05/2026',
+      parent: 'arch-linux',
+      color: '#222222',
+      url: 'https://en.wikipedia.org/wiki/SteamOS'
   },
   {
       id: 'android',
