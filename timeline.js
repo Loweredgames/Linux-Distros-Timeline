@@ -351,6 +351,25 @@ const distros = [
       url: 'https://en.wikipedia.org/wiki/SteamOS'
   },
   {
+      id: 'manjarowish',
+      name: 'Manjarowish',
+      date: '20/06/2019',
+      last_update: '20/06/2019',
+      parent: 'manjaro',
+      rename: 'garuda-linux',
+      color: '#5c2d2d',
+      url: 'https://en.wikipedia.org/wiki/Garuda_Linux'
+  },
+  {
+      id: 'garuda-linux',
+      name: 'Garuda Linux',
+      date: '26/03/2020',
+      last_update: '08/03/2025',
+      parent: 'arch-linux',
+      color: '#921818',
+      url: 'https://en.wikipedia.org/wiki/Garuda_Linux'
+  },
+  {
       id: 'android',
       name: 'Android',
       logo: 'logos/android.png',
