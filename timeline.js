@@ -186,6 +186,15 @@ const distros = [
       url: 'https://en.wikipedia.org/wiki/Linux_Mint'
   },
   {
+      id: 'pop_os',
+      name: 'Pop!_OS',
+      date: '27/10/2017',
+      last_update: '11/12/2025',
+      parent: 'ubuntu',
+      color: '#50bcc9',
+      url: 'https://en.wikipedia.org/wiki/Pop!_OS'
+  },
+  {
       id: 'linux-mint-de',
       name: 'Linux Mint Debian Edition',
       date: '01/01/2010',
@@ -193,6 +202,15 @@ const distros = [
       parent: 'debian',
       color: '#a16c5f',
       url: 'https://en.wikipedia.org/wiki/Linux_Mint'
+  },
+  {
+      id: 'steamos-debian',
+      name: 'SteamOS 1.0 - 2.0',
+      date: '13/12/2013',
+      last_update: '18/07/2019',
+      parent: 'debian',
+      color: '#271b1b',
+      url: 'https://en.wikipedia.org/wiki/SteamOS'
   },
   {
       id: 'kde-neon',
@@ -261,11 +279,20 @@ const distros = [
   },
   {
       id: 'fedora-linux',
-      name: 'Fedora Core',
+      name: 'Fedora',
       date: '31/07/2007',
       last_update: '28/04/2026',
       color: '#51a2da',
       url: 'https://en.wikipedia.org/wiki/Fedora_Linux'
+  },
+  {
+      id: 'bazzite',
+      name: 'Bazzite',
+      date: '01/11/2023',
+      last_update: '05/06/2026',
+      parent: 'fedora-linux',
+      color: '#5936ce',
+      url: 'https://en.wikipedia.org/wiki/Bazzite_(operating_system)'
   },
   {
       id: 'suse-linux',
@@ -304,6 +331,52 @@ const distros = [
       parent: 'arch-linux',
       color: '#17c5d1',
       url: 'https://en.wikipedia.org/wiki/Arch_Linux_ARM'
+  },
+  {
+      id: 'endeavouros',
+      name: 'EndeavourOS',
+      date: '15/07/2019',
+      last_update: '12/03/2026',
+      parent: 'arch-linux',
+      color: '#7f3ebe',
+      url: 'https://en.wikipedia.org/wiki/EndeavourOS'
+  },
+  {
+      id: 'manjaro',
+      name: 'Manjaro',
+      date: '10/07/2011',
+      last_update: '05/01/2026',
+      parent: 'arch-linux',
+      color: '#35bfa4',
+      url: 'https://en.wikipedia.org/wiki/Manjaro'
+  },
+  {
+      id: 'steamos',
+      name: 'SteamOS',
+      date: '02/03/2022',
+      last_update: '20/05/2026',
+      parent: 'arch-linux',
+      color: '#222222',
+      url: 'https://en.wikipedia.org/wiki/SteamOS'
+  },
+  {
+      id: 'manjarowish',
+      name: 'Manjarowish',
+      date: '20/06/2019',
+      last_update: '20/06/2019',
+      parent: 'manjaro',
+      rename: 'garuda-linux',
+      color: '#5c2d2d',
+      url: 'https://en.wikipedia.org/wiki/Garuda_Linux'
+  },
+  {
+      id: 'garuda-linux',
+      name: 'Garuda Linux',
+      date: '26/03/2020',
+      last_update: '08/03/2025',
+      parent: 'arch-linux',
+      color: '#921818',
+      url: 'https://en.wikipedia.org/wiki/Garuda_Linux'
   },
   {
       id: 'android',
