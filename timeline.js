@@ -279,11 +279,20 @@ const distros = [
   },
   {
       id: 'fedora-linux',
-      name: 'Fedora Core',
+      name: 'Fedora',
       date: '31/07/2007',
       last_update: '28/04/2026',
       color: '#51a2da',
       url: 'https://en.wikipedia.org/wiki/Fedora_Linux'
+  },
+  {
+      id: 'bazzite',
+      name: 'Bazzite',
+      date: '01/11/2023',
+      last_update: '05/06/2026',
+      parent: 'fedora-linux',
+      color: '#5936ce',
+      url: 'https://en.wikipedia.org/wiki/Bazzite_(operating_system)'
   },
   {
       id: 'suse-linux',
